@@ -287,7 +287,7 @@ local function specThink()
         if not isRoaming and p == specEnt and not thirdperson then skip = skip + 3 continue end
 
         local tr = p:GetEyeTrace()
-        local sp = gunpos(p)
+        local sp = p:GetShootPos()
 
         local pos = i * 3 - skip
 
