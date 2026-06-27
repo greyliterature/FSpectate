@@ -262,6 +262,7 @@ end
 gunpos
 Gets the position of a player's gun
 ---------------------------------------------------------------------------*/
+/*
 local function gunpos(ply)
     local wep = ply:GetActiveWeapon()
     if not IsValid(wep) then return ply:EyePos() end
@@ -269,6 +270,7 @@ local function gunpos(ply)
     if not att then return ply:EyePos() end
     return att.Pos
 end
+*/
 
 /*---------------------------------------------------------------------------
 Spectate think
