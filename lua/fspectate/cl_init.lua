@@ -10,6 +10,13 @@ local roamVelocity = Vector(0)
 local thirdPersonDistance = 100
 
 /*---------------------------------------------------------------------------
+Returns if the localplayer is spectating
+---------------------------------------------------------------------------*/
+function FSpectate.isSpectating()
+    return isSpectating
+end
+
+/*---------------------------------------------------------------------------
 Retrieve the current spectated player
 ---------------------------------------------------------------------------*/
 function FSpectate.getSpecEnt()
