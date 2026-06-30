@@ -1247,7 +1247,7 @@ hook.Add("StartCommand", "FSpectateTrackInputs", function(ply, ucmd)
         if input.IsButtonDown(pressedKey) then net.WriteUInt(pressedKey, 8) end
     end
 
-    for pressedMouseButton = MOUSE_FIRST, MOUSE_LAST do -- this is only from 107, 113 but were writing 8 bits, lower cost and count up on server later
+    for pressedMouseButton = MOUSE_FIRST, MOUSE_LAST do
         if input.IsButtonDown(pressedMouseButton) then
             local cheapInt = pressedMouseButton - MOUSE_FIRST -- shift down so that it costs less bits, then shift up on the server later
             net.WriteUInt(cheapInt, 3)
