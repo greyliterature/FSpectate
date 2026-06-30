@@ -335,6 +335,744 @@ local function specThink()
 end
 
 /*---------------------------------------------------------------------------
+drawInputs
+Draw spectated player's inputs on screen
+---------------------------------------------------------------------------*/
+CreateClientConVar("fspectate_showinputs_positionx", "50", true, false)
+local fspectate_showinputs_positionxValue = GetConVar("fspectate_showinputs_positionx"):GetFloat()
+cvars.AddChangeCallback("fspectate_showinputs_positionx", function(convar, oldValue, newValue)
+    --
+    fspectate_showinputs_positionxValue = newValue
+end, "fspectate_showinputs_positionx")
+
+CreateClientConVar("fspectate_showinputs_positiony", "115", true, false)
+local fspectate_showinputs_positionyValue = GetConVar("fspectate_showinputs_positiony"):GetFloat()
+cvars.AddChangeCallback("fspectate_showinputs_positiony", function(convar, oldValue, newValue)
+    --
+    fspectate_showinputs_positionyValue = newValue
+end, "fspectate_showinputs_positiony")
+
+CreateClientConVar("fspectate_showinputs_percentsize", "0.1", true, false)
+local fspectate_showinputs_percentsizeValue = GetConVar("fspectate_showinputs_percentsize"):GetFloat()
+cvars.AddChangeCallback("fspectate_showinputs_percentsize", function(convar, oldValue, newValue)
+    --
+    fspectate_showinputs_percentsizeValue = newValue
+end, "fspectate_showinputs_percentsize")
+
+surface.CreateFont("KeyboardFont", {
+    font = "Trebuchet MS",
+    extended = false,
+    size = ScreenScale(54 * fspectate_showinputs_percentsizeValue),
+    weight = 500,
+    blursize = 0,
+    scanlines = 0,
+    antialias = true,
+    underline = false,
+    italic = false,
+    strikeout = false,
+    symbol = false,
+    rotary = false,
+    shadow = false,
+    additive = false,
+    outline = false,
+})
+
+local KeyboardInputs = {
+    ["Esc"] = {
+        input = KEY_ESCAPE,
+        positionx = 0,
+        positiony = 0,
+        keysize = 100
+    },
+    ["F1"] = {
+        input = KEY_F1,
+        positionx = 100,
+        positiony = 0,
+        keysize = 100
+    },
+    ["F2"] = {
+        input = KEY_F2,
+        positionx = 200,
+        positiony = 0,
+        keysize = 100
+    },
+    ["F3"] = {
+        input = KEY_F3,
+        positionx = 300,
+        positiony = 0,
+        keysize = 100
+    },
+    ["F4"] = {
+        input = KEY_F4,
+        positionx = 400,
+        positiony = 0,
+        keysize = 100
+    },
+    ["F5"] = {
+        input = KEY_F5,
+        positionx = 500,
+        positiony = 0,
+        keysize = 100
+    },
+    ["F6"] = {
+        input = KEY_F6,
+        positionx = 600,
+        positiony = 0,
+        keysize = 100
+    },
+    ["F7"] = {
+        input = KEY_F7,
+        positionx = 700,
+        positiony = 0,
+        keysize = 100
+    },
+    ["F8"] = {
+        input = KEY_F8,
+        positionx = 800,
+        positiony = 0,
+        keysize = 100
+    },
+    ["F9"] = {
+        input = KEY_F9,
+        positionx = 900,
+        positiony = 0,
+        keysize = 100
+    },
+    ["F10"] = {
+        input = KEY_F10,
+        positionx = 1000,
+        positiony = 0,
+        keysize = 100
+    },
+    ["F11"] = {
+        input = KEY_F11,
+        positionx = 1100,
+        positiony = 0,
+        keysize = 100
+    },
+    ["F12"] = {
+        input = KEY_F12,
+        positionx = 1200,
+        positiony = 0,
+        keysize = 100
+    },
+    ["ScrLk"] = {
+        input = KEY_SCROLLLOCK,
+        positionx = 1650,
+        positiony = 0,
+        keysize = 100
+    },
+    ["Pause"] = {
+        input = KEY_BREAK,
+        positionx = 1750,
+        positiony = 0,
+        keysize = 100
+    },
+    ["`"] = {
+        input = KEY_BACKQUOTE,
+        positionx = 0,
+        positiony = 100,
+        keysize = 100
+    },
+    ["1"] = {
+        input = KEY_1,
+        positionx = 100,
+        positiony = 100,
+        keysize = 100
+    },
+    ["2"] = {
+        input = KEY_2,
+        positionx = 200,
+        positiony = 100,
+        keysize = 100
+    },
+    ["3"] = {
+        input = KEY_3,
+        positionx = 300,
+        positiony = 100,
+        keysize = 100
+    },
+    ["4"] = {
+        input = KEY_4,
+        positionx = 400,
+        positiony = 100,
+        keysize = 100
+    },
+    ["5"] = {
+        input = KEY_5,
+        positionx = 500,
+        positiony = 100,
+        keysize = 100
+    },
+    ["6"] = {
+        input = KEY_6,
+        positionx = 600,
+        positiony = 100,
+        keysize = 100
+    },
+    ["7"] = {
+        input = KEY_7,
+        positionx = 700,
+        positiony = 100,
+        keysize = 100
+    },
+    ["8"] = {
+        input = KEY_8,
+        positionx = 800,
+        positiony = 100,
+        keysize = 100
+    },
+    ["9"] = {
+        input = KEY_9,
+        positionx = 900,
+        positiony = 100,
+        keysize = 100
+    },
+    ["0"] = {
+        input = KEY_0,
+        positionx = 1000,
+        positiony = 100,
+        keysize = 100
+    },
+    ["-"] = {
+        input = KEY_MINUS,
+        positionx = 1100,
+        positiony = 100,
+        keysize = 100
+    },
+    ["="] = {
+        input = KEY_EQUAL,
+        positionx = 1200,
+        positiony = 100,
+        keysize = 100
+    },
+    ["Backspace"] = {
+        input = KEY_BACKSPACE,
+        positionx = 1300,
+        positiony = 100,
+        keysize = 200
+    },
+    ["Tab"] = {
+        input = KEY_TAB,
+        positionx = 0,
+        positiony = 200,
+        keysize = 150
+    },
+    ["Q"] = {
+        input = KEY_Q,
+        positionx = 150,
+        positiony = 200,
+        keysize = 100
+    },
+    ["W"] = {
+        input = KEY_W,
+        positionx = 250,
+        positiony = 200,
+        keysize = 100
+    },
+    ["E"] = {
+        input = KEY_E,
+        positionx = 350,
+        positiony = 200,
+        keysize = 100
+    },
+    ["R"] = {
+        input = KEY_R,
+        positionx = 450,
+        positiony = 200,
+        keysize = 100
+    },
+    ["T"] = {
+        input = KEY_T,
+        positionx = 550,
+        positiony = 200,
+        keysize = 100
+    },
+    ["Y"] = {
+        input = KEY_Y,
+        positionx = 650,
+        positiony = 200,
+        keysize = 100
+    },
+    ["U"] = {
+        input = KEY_U,
+        positionx = 750,
+        positiony = 200,
+        keysize = 100
+    },
+    ["I"] = {
+        input = KEY_I,
+        positionx = 850,
+        positiony = 200,
+        keysize = 100
+    },
+    ["O"] = {
+        input = KEY_O,
+        positionx = 950,
+        positiony = 200,
+        keysize = 100
+    },
+    ["P"] = {
+        input = KEY_P,
+        positionx = 1050,
+        positiony = 200,
+        keysize = 100
+    },
+    ["["] = {
+        input = KEY_LBRACKET,
+        positionx = 1150,
+        positiony = 200,
+        keysize = 100
+    },
+    ["]"] = {
+        input = KEY_RBRACKET,
+        positionx = 1250,
+        positiony = 200,
+        keysize = 100
+    },
+    ["\\"] = {
+        input = KEY_BACKSLASH,
+        positionx = 1350,
+        positiony = 200,
+        keysize = 150
+    },
+    ["Capslock"] = {
+        input = KEY_CAPSLOCK,
+        positionx = 0,
+        positiony = 300,
+        keysize = 175
+    },
+    ["A"] = {
+        input = KEY_A,
+        positionx = 175,
+        positiony = 300,
+        keysize = 100
+    },
+    ["S"] = {
+        input = KEY_S,
+        positionx = 275,
+        positiony = 300,
+        keysize = 100
+    },
+    ["D"] = {
+        input = KEY_D,
+        positionx = 375,
+        positiony = 300,
+        keysize = 100
+    },
+    ["F"] = {
+        input = KEY_F,
+        positionx = 475,
+        positiony = 300,
+        keysize = 100
+    },
+    ["G"] = {
+        input = KEY_G,
+        positionx = 575,
+        positiony = 300,
+        keysize = 100
+    },
+    ["H"] = {
+        input = KEY_H,
+        positionx = 675,
+        positiony = 300,
+        keysize = 100
+    },
+    ["J"] = {
+        input = KEY_J,
+        positionx = 775,
+        positiony = 300,
+        keysize = 100
+    },
+    ["K"] = {
+        input = KEY_K,
+        positionx = 875,
+        positiony = 300,
+        keysize = 100
+    },
+    ["L"] = {
+        input = KEY_L,
+        positionx = 975,
+        positiony = 300,
+        keysize = 100
+    },
+    [";"] = {
+        input = KEY_SEMICOLON,
+        positionx = 1075,
+        positiony = 300,
+        keysize = 100
+    },
+    ["'"] = {
+        input = KEY_APOSTROPHE,
+        positionx = 1175,
+        positiony = 300,
+        keysize = 100
+    },
+    ["Enter"] = {
+        input = KEY_ENTER,
+        positionx = 1275,
+        positiony = 300,
+        keysize = 225
+    },
+    ["LShift"] = {
+        input = KEY_LSHIFT,
+        positionx = 0,
+        positiony = 400,
+        keysize = 225
+    },
+    ["Z"] = {
+        input = KEY_Z,
+        positionx = 225,
+        positiony = 400,
+        keysize = 100
+    },
+    ["X"] = {
+        input = KEY_X,
+        positionx = 325,
+        positiony = 400,
+        keysize = 100
+    },
+    ["C"] = {
+        input = KEY_C,
+        positionx = 425,
+        positiony = 400,
+        keysize = 100
+    },
+    ["V"] = {
+        input = KEY_V,
+        positionx = 525,
+        positiony = 400,
+        keysize = 100
+    },
+    ["B"] = {
+        input = KEY_B,
+        positionx = 625,
+        positiony = 400,
+        keysize = 100
+    },
+    ["N"] = {
+        input = KEY_N,
+        positionx = 725,
+        positiony = 400,
+        keysize = 100
+    },
+    ["M"] = {
+        input = KEY_M,
+        positionx = 825,
+        positiony = 400,
+        keysize = 100
+    },
+    [","] = {
+        input = KEY_COMMA,
+        positionx = 925,
+        positiony = 400,
+        keysize = 100
+    },
+    ["."] = {
+        input = KEY_PERIOD,
+        positionx = 1025,
+        positiony = 400,
+        keysize = 100
+    },
+    ["/"] = {
+        input = KEY_SLASH,
+        positionx = 1125,
+        positiony = 400,
+        keysize = 100
+    },
+    ["RShift"] = {
+        input = KEY_RSHIFT,
+        positionx = 1225,
+        positiony = 400,
+        keysize = 275
+    },
+    ["LCtrl"] = {
+        input = KEY_LCONTROL,
+        positionx = 0,
+        positiony = 500,
+        keysize = 125
+    },
+    ["LWin"] = {
+        input = KEY_LWIN,
+        positionx = 125,
+        positiony = 500,
+        keysize = 125
+    },
+    ["LAlt"] = {
+        input = KEY_LALT,
+        positionx = 250,
+        positiony = 500,
+        keysize = 125
+    },
+    ["Space"] = {
+        input = KEY_SPACE,
+        positionx = 375,
+        positiony = 500,
+        keysize = 625
+    },
+    ["RAlt"] = {
+        input = KEY_RALT,
+        positionx = 1000,
+        positiony = 500,
+        keysize = 125
+    },
+    ["RWin"] = {
+        input = KEY_RWIN,
+        positionx = 1125,
+        positiony = 500,
+        keysize = 125
+    },
+    ["Menu"] = {
+        input = KEY_APP,
+        positionx = 1250,
+        positiony = 500,
+        keysize = 125
+    },
+    ["RCtrl"] = {
+        input = KEY_RCONTROL,
+        positionx = 1375,
+        positiony = 500,
+        keysize = 125
+    },
+    ["Ins"] = {
+        input = KEY_INSERT,
+        positionx = 1550,
+        positiony = 100,
+        keysize = 100
+    },
+    ["Home"] = {
+        input = KEY_HOME,
+        positionx = 1650,
+        positiony = 100,
+        keysize = 100
+    },
+    ["PgUp"] = {
+        input = KEY_PAGEUP,
+        positionx = 1750,
+        positiony = 100,
+        keysize = 100
+    },
+    ["Del"] = {
+        input = KEY_DELETE,
+        positionx = 1550,
+        positiony = 200,
+        keysize = 100
+    },
+    ["End"] = {
+        input = KEY_END,
+        positionx = 1650,
+        positiony = 200,
+        keysize = 100
+    },
+    ["PgDn"] = {
+        input = KEY_PAGEDOWN,
+        positionx = 1750,
+        positiony = 200,
+        keysize = 100
+    },
+    ["Up"] = {
+        input = KEY_UP,
+        positionx = 1650,
+        positiony = 400,
+        keysize = 100
+    },
+    ["Left"] = {
+        input = KEY_LEFT,
+        positionx = 1550,
+        positiony = 500,
+        keysize = 100
+    },
+    ["Down"] = {
+        input = KEY_DOWN,
+        positionx = 1650,
+        positiony = 500,
+        keysize = 100
+    },
+    ["Right"] = {
+        input = KEY_RIGHT,
+        positionx = 1750,
+        positiony = 500,
+        keysize = 100
+    },
+    ["NumLk"] = {
+        input = KEY_NUMLOCK,
+        positionx = 1950,
+        positiony = 100,
+        keysize = 100
+    },
+    ["Num/"] = {
+        input = KEY_PAD_DIVIDE,
+        positionx = 2050,
+        positiony = 100,
+        keysize = 100
+    },
+    ["Num*"] = {
+        input = KEY_PAD_MULTIPLY,
+        positionx = 2150,
+        positiony = 100,
+        keysize = 100
+    },
+    ["Num-"] = {
+        input = KEY_PAD_MINUS,
+        positionx = 2250,
+        positiony = 100,
+        keysize = 100
+    },
+    ["Num7"] = {
+        input = KEY_PAD_7,
+        positionx = 1950,
+        positiony = 200,
+        keysize = 100
+    },
+    ["Num8"] = {
+        input = KEY_PAD_8,
+        positionx = 2050,
+        positiony = 200,
+        keysize = 100
+    },
+    ["Num9"] = {
+        input = KEY_PAD_9,
+        positionx = 2150,
+        positiony = 200,
+        keysize = 100
+    },
+    ["Num+"] = {
+        input = KEY_PAD_PLUS,
+        positionx = 2250,
+        positiony = 200,
+        keysize = 100
+    },
+    ["Num4"] = {
+        input = KEY_PAD_4,
+        positionx = 1950,
+        positiony = 300,
+        keysize = 100
+    },
+    ["Num5"] = {
+        input = KEY_PAD_5,
+        positionx = 2050,
+        positiony = 300,
+        keysize = 100
+    },
+    ["Num6"] = {
+        input = KEY_PAD_6,
+        positionx = 2150,
+        positiony = 300,
+        keysize = 100
+    },
+    ["Num1"] = {
+        input = KEY_PAD_1,
+        positionx = 1950,
+        positiony = 400,
+        keysize = 100
+    },
+    ["Num2"] = {
+        input = KEY_PAD_2,
+        positionx = 2050,
+        positiony = 400,
+        keysize = 100
+    },
+    ["Num3"] = {
+        input = KEY_PAD_3,
+        positionx = 2150,
+        positiony = 400,
+        keysize = 100
+    },
+    ["NEnter"] = {
+        input = KEY_PAD_ENTER,
+        positionx = 2250,
+        positiony = 400,
+        keysize = 100
+    },
+    ["Num0"] = {
+        input = KEY_PAD_0,
+        positionx = 1950,
+        positiony = 500,
+        keysize = 200
+    },
+    ["Num."] = {
+        input = KEY_PAD_DECIMAL,
+        positionx = 2150,
+        positiony = 500,
+        keysize = 100
+    },
+}
+ 
+local MouseInputs = {
+    ["ScU"] = {
+        input = MOUSE_WHEEL_UP,
+        positionx = 1750,
+        positiony = 200,
+        keysize = 100
+    },
+    ["LMB"] = {
+        input = MOUSE_LEFT,
+        positionx = 1650,
+        positiony = 300,
+        keysize = 100
+    },
+    ["MMB"] = {
+        input = MOUSE_MIDDLE,
+        positionx = 1750,
+        positiony = 300,
+        keysize = 100
+    },
+    ["RMB"] = {
+        input = MOUSE_RIGHT,
+        positionx = 1850,
+        positiony = 300,
+        keysize = 100
+    },
+    ["ScD"] = {
+        input = MOUSE_WHEEL_DOWN,
+        positionx = 1750,
+        positiony = 400,
+        keysize = 100
+    },
+    ["SMB"] = {
+        input = MOUSE_4,
+        positionx = 1750,
+        positiony = 500,
+        keysize = 100
+    },
+}
+
+local Black = Color(0, 0, 0)
+local White = Color(255, 255, 255)
+local function drawInputs()
+    specEnt = LocalPlayer()
+    if not specEnt or not specEnt:IsPlayer() or specEnt:IsBot() then return end
+    local OriginX = ScreenScale(fspectate_showinputs_positionxValue)
+    local OriginY = ScreenScaleH(fspectate_showinputs_positionyValue)
+    local MouseOffsetX = ScreenScale(250)
+    local MouseOffsetY = 0
+    for key, data in pairs(KeyboardInputs) do
+        local chunk = math.floor(data.input / 32) + 1
+        local IsKeyDown = bit.band(specEnt["pressedKeys" .. chunk], bit.lshift(1, data.input % 32)) ~= 0
+        surface.SetDrawColor(IsKeyDown and White or Black)
+        surface.DrawRect(ScreenScale(OriginX + (data.positionx * fspectate_showinputs_percentsizeValue)), ScreenScale(OriginY + (data.positiony * fspectate_showinputs_percentsizeValue)), ScreenScale(data.keysize * fspectate_showinputs_percentsizeValue), ScreenScale(100 * fspectate_showinputs_percentsizeValue))
+        surface.SetDrawColor((IsKeyDown and Black) or White)
+        surface.DrawOutlinedRect(ScreenScale(OriginX + (data.positionx * fspectate_showinputs_percentsizeValue)), ScreenScale(OriginY + (data.positiony * fspectate_showinputs_percentsizeValue)), ScreenScale(data.keysize * fspectate_showinputs_percentsizeValue), ScreenScale(100 * fspectate_showinputs_percentsizeValue, 1))
+        surface.SetFont("KeyboardFont")
+        local textHeight = select(2, surface.GetTextSize(key))
+        draw.DrawText(key, "KeyboardFont", ScreenScale(OriginX + (data.positionx * fspectate_showinputs_percentsizeValue) + (data.keysize * fspectate_showinputs_percentsizeValue / 2)), ScreenScale(OriginY + (data.positiony * fspectate_showinputs_percentsizeValue) + (50 * fspectate_showinputs_percentsizeValue)) - textHeight / 2, (IsKeyDown and Black) or White, TEXT_ALIGN_CENTER)
+    end
+
+    for button, data in pairs(MouseInputs) do
+        local chunk = math.floor(data.input / 32) + 1
+        local IsKeyDown = bit.band(specEnt["pressedMouseButtons" .. chunk], bit.lshift(1, data.input % 32)) ~= 0
+        surface.SetDrawColor((IsKeyDown and White) or Black)
+        surface.DrawRect(ScreenScale(OriginX + MouseOffsetX * fspectate_showinputs_percentsizeValue + (data.positionx * fspectate_showinputs_percentsizeValue)), ScreenScale(OriginY + MouseOffsetY * fspectate_showinputs_percentsizeValue + (data.positiony * fspectate_showinputs_percentsizeValue)), ScreenScale(data.keysize * fspectate_showinputs_percentsizeValue), ScreenScale(100 * fspectate_showinputs_percentsizeValue))
+        surface.SetDrawColor((IsKeyDown and Black) or White)
+        surface.DrawOutlinedRect(ScreenScale(OriginX + MouseOffsetX * fspectate_showinputs_percentsizeValue + (data.positionx * fspectate_showinputs_percentsizeValue)), ScreenScale(OriginY + MouseOffsetY * fspectate_showinputs_percentsizeValue + (data.positiony * fspectate_showinputs_percentsizeValue)), ScreenScale(data.keysize * fspectate_showinputs_percentsizeValue), ScreenScale(100 * fspectate_showinputs_percentsizeValue, 1))
+        surface.SetFont("KeyboardFont")
+        local _, Height = surface.GetTextSize(button)
+        draw.DrawText(button, "KeyboardFont", ScreenScale(OriginX + MouseOffsetX * fspectate_showinputs_percentsizeValue + (data.positionx * fspectate_showinputs_percentsizeValue) + (data.keysize * fspectate_showinputs_percentsizeValue / 2)), ScreenScale(OriginY + MouseOffsetY * fspectate_showinputs_percentsizeValue + (data.positiony * fspectate_showinputs_percentsizeValue) + (50 * fspectate_showinputs_percentsizeValue)) - (Height / 2), (IsKeyDown and Black) or White, TEXT_ALIGN_CENTER)
+    end
+end
+
+
+/*---------------------------------------------------------------------------
 Draw help on the screen
 ---------------------------------------------------------------------------*/
 local uiForeground, uiBackground = Color(240, 240, 255, 255), Color(20, 20, 20, 150)
