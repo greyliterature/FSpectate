@@ -1192,3 +1192,67 @@ stopSpectating = function()
     RunConsoleCommand("FSpectate_StopSpectating")
     isSpectating = false
 end
+
+/*---------------------------------------------------------------------------
+Recieve inputs of other players from server
+---------------------------------------------------------------------------*/
+net.Receive("FSpectateNetworkPlayerInputs", function()
+    local ply = net.ReadPlayer()
+    local numKeysPressed = net.ReadUInt(7)
+    local keyChunksAmount = math.floor(KEY_LAST / 32) + 1 -- uint32 isnt precise enough for a large bitflag, KEY_LAST (107) has to be made into 4 bitflags 
+    for chunk = 1, keyChunksAmount do
+        ply["pressedKeys" .. chunk] = 0
+    end
+
+    --ply.pressedKeysBitFlag = 0
+    for i = 1, numKeysPressed do
+        local key = net.ReadUInt(8)
+        --print(key)
+        local chunk = math.floor(key / 32) + 1
+        ply["pressedKeys" .. chunk] = bit.bor(ply["pressedKeys" .. chunk], bit.lshift(1, key % 32))
+    end
+
+    local numMouseButtonsPressed = net.ReadUInt(3)
+    local mouseChunksAmount = math.floor(MOUSE_LAST - MOUSE_FIRST / 32) + 1 -- MOUSE_LAST (113) - MOUSE_FIRST (107) can be stored in 1 uint32 chunk
+    for chunk = 1, mouseChunksAmount do
+        ply["pressedMouseButtons" .. chunk] = 0
+    end
+
+    for i = 1, numMouseButtonsPressed do
+        local mouseButton = net.ReadUInt(3)
+        local shiftedInt = mouseButton + MOUSE_FIRST -- we shifted down by MOUSE_FIRST write to server cheaper, now shift it back to be correct 
+        local chunk = math.floor(shiftedInt / 32) + 1
+        ply["pressedMouseButtons" .. chunk] = bit.bor(ply["pressedMouseButtons" .. chunk], bit.lshift(1, shiftedInt % 32))
+    end
+end)
+
+/*---------------------------------------------------------------------------
+Send inputs of localplayer to server
+---------------------------------------------------------------------------*/
+hook.Add("StartCommand", "FSpectateTrackInputs", function(ply, ucmd)
+    net.Start("FSpectateSendInputs")
+    local numKeysPressed = 0
+    for i = KEY_FIRST, KEY_LAST do
+        if input.IsButtonDown(i) then numKeysPressed = numKeysPressed + 1 end
+    end
+
+    net.WriteUInt(numKeysPressed, 7) -- KEY_FIRST (0) - KEY_LAST (106), 7 bits is enough
+    local numMouseButtonsPressed = 0
+    for i = MOUSE_FIRST, MOUSE_LAST do
+        if input.IsButtonDown(i) then numMouseButtonsPressed = numMouseButtonsPressed + 1 end
+    end
+
+    net.WriteUInt(numMouseButtonsPressed, 3) -- MOUSE_FIRST (107) - KEY_LAST (113), 3 bits is enough
+    for pressedKey = KEY_FIRST, KEY_LAST do -- redo the for loops to send 8 bit uints of whether or not key is down
+        if input.IsButtonDown(pressedKey) then net.WriteUInt(pressedKey, 8) end
+    end
+
+    for pressedMouseButton = MOUSE_FIRST, MOUSE_LAST do -- this is only from 107, 113 but were writing 8 bits, lower cost and count up on server later
+        if input.IsButtonDown(pressedMouseButton) then
+            local cheapInt = pressedMouseButton - MOUSE_FIRST -- shift down so that it costs less bits, then shift up on the server later
+            net.WriteUInt(cheapInt, 3)
+        end
+    end
+
+    net.SendToServer()
+end)
