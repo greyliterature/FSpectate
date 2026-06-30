@@ -1040,7 +1040,6 @@ local MouseInputs = {
 local Black = Color(0, 0, 0)
 local White = Color(255, 255, 255)
 local function drawInputs()
-    specEnt = LocalPlayer()
     if not specEnt or not specEnt:IsPlayer() or specEnt:IsBot() then return end
     local OriginX = ScreenScale(fspectate_showinputs_positionxValue)
     local OriginY = ScreenScaleH(fspectate_showinputs_positionyValue)
