@@ -56,7 +56,7 @@ function FSpectate.startSpectating(ply, target, canExitSpectate)
     ply:ExitVehicle()
 
     net.Start("FSpectate")
-        net.WriteBool((canExitSpectate and canExitSpectate == true) or true)
+        net.WriteBool(canExitSpectate == true or canExitSpectate == nil)
         net.WriteBool(target == nil)
         if IsValid(ply.FSpectatingEnt) then
             net.WriteEntity(ply.FSpectatingEnt)
