@@ -1142,10 +1142,10 @@ Spectate a player
 ---------------------------------------------------------------------------*/
 local canExitSpectate = true
 local function startSpectate(um)
+    canExitSpectate = net.ReadBool()
     isRoaming = net.ReadBool()
     specEnt = net.ReadEntity()
     specEnt = IsValid(specEnt) and specEnt or nil
-    canExitSpectate = net.ReadBool()
     if isRoaming then startFreeRoam() end
     isSpectating = true
     keysDown = {}
@@ -1170,7 +1170,7 @@ stopSpectating
 Stop spectating a player
 ---------------------------------------------------------------------------*/
 stopSpectating = function(forced)
-    if canExitSpectate == false and forced ~= true then
+    if canExitSpectate ~= true and forced ~= true then
         chat.AddText("Can't exit spectate right now")
         return
     end
