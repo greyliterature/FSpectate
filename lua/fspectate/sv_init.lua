@@ -1,5 +1,7 @@
 util.AddNetworkString("FSpectate")
 util.AddNetworkString("FSpectateTarget")
+util.AddNetworkString("FSpectateSendInputs")
+util.AddNetworkString("FSpectateNetworkPlayerInputs")
 
 local function findPlayer(info)
     if not info or info == "" then return nil end
@@ -225,3 +227,24 @@ local function fixAdminModIncompat()
     end
 end
 hook.Add("InitPostEntity", "FSpectate", fixAdminModIncompat)
+
+/*---------------------------------------------------------------------------
+Receive inputs of players and network them
+---------------------------------------------------------------------------*/
+net.Receive("FSpectateSendInputs",function(len, ply)
+    local numKeysPressed = net.ReadUInt(7)
+    local numMouseButtonsPressed = net.ReadUInt(3)
+    net.Start("FSpectateNetworkPlayerInputs")
+    net.WritePlayer(ply)
+    net.WriteUInt(numKeysPressed, 7)
+    for i = 1, numKeysPressed do
+        net.WriteUInt(net.ReadUInt(8), 8)
+    end
+
+    net.WriteUInt(numMouseButtonsPressed, 3)
+    for i = 1, numMouseButtonsPressed do
+        net.WriteUInt(net.ReadUInt(3), 3)
+    end
+
+    net.Broadcast()
+end)
