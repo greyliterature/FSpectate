@@ -68,6 +68,11 @@ function FSpectate.startSpectating(ply, target, canExitSpectate)
     hook.Call("FSpectate_start", nil, ply, target)
 end
 
+function FSpectate.forceUnspectate(ply)
+    net.Start("FSpectateForceUnspectate")
+    net.Send(ply)
+end
+
 local function Spectate(ply, cmd, args)
     CAMI.PlayerHasAccess(ply, "FSpectate", function(b, _)
         if not b then ply:ChatPrint("No Access!") return end
