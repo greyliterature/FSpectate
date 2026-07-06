@@ -51,6 +51,7 @@ function FSpectate.startSpectating(ply, target, canExitSpectate)
 
     ply.FSpectatingEnt = target
     ply.FSpectating = true
+    ply.FSpectateViewAngles = ply:GetAngles()
     FSpectating[ply] = true
 
     ply:ExitVehicle()
@@ -143,6 +144,7 @@ concommand.Add("_FSpectatePosUpdate", setSpectatePos)
 local function endSpectate(ply, cmd, args)
     ply.FSpectatingEnt = nil
     ply.FSpectating = nil
+    ply.FSpectateViewAngles = nil
     ply.FSpectatePos = nil
     FSpectating[ply] = nil
     hook.Call("FSpectate_stop", nil, ply)
@@ -256,4 +258,14 @@ net.Receive("FSpectateSendInputs",function(len, ply)
     end
 
     net.Broadcast()
+end)
+
+
+/*---------------------------------------------------------------------------
+Don't allow players to look around if they are dead while spectating
+---------------------------------------------------------------------------*/
+hook.Add("StartCommand", "FSpectateStopMouse", function(ply, cmd)
+    if ply.FSpectating and ply:Alive() == false then
+        cmd:SetViewAngles(ply.FSpectateViewAngles or angle_zero)
+    end
 end)
