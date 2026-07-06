@@ -190,7 +190,7 @@ local keysDown = {}
 local function specBinds(ply, bind, pressed)
     local key = input.LookupBinding(bind)
 
-    if bind == "+jump" then
+    if bind == "+jump" and pressed then
         stopSpectating()
         return true
     elseif bind == "+reload" and pressed then
