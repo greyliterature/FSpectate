@@ -1048,6 +1048,7 @@ local function drawInputs()
     local MouseOffsetY = 0
     for key, data in pairs(KeyboardInputs) do
         local chunk = math.floor(data.input / 32) + 1
+        if not specEnt["pressedKeys" .. chunk] then continue end
         local IsKeyDown = bit.band(specEnt["pressedKeys" .. chunk], bit.lshift(1, data.input % 32)) ~= 0
         surface.SetDrawColor(IsKeyDown and White or Black)
         surface.DrawRect(ScreenScale(OriginX + (data.positionx * fspectate_showinputs_percentsizeValue)), ScreenScale(OriginY + (data.positiony * fspectate_showinputs_percentsizeValue)), ScreenScale(data.keysize * fspectate_showinputs_percentsizeValue), ScreenScale(100 * fspectate_showinputs_percentsizeValue))
@@ -1060,6 +1061,7 @@ local function drawInputs()
 
     for button, data in pairs(MouseInputs) do
         local chunk = math.floor(data.input / 32) + 1
+        if not specEnt["pressedMouseButtons" .. chunk] then continue end
         local IsKeyDown = bit.band(specEnt["pressedMouseButtons" .. chunk], bit.lshift(1, data.input % 32)) ~= 0
         surface.SetDrawColor((IsKeyDown and White) or Black)
         surface.DrawRect(ScreenScale(OriginX + MouseOffsetX * fspectate_showinputs_percentsizeValue + (data.positionx * fspectate_showinputs_percentsizeValue)), ScreenScale(OriginY + MouseOffsetY * fspectate_showinputs_percentsizeValue + (data.positiony * fspectate_showinputs_percentsizeValue)), ScreenScale(data.keysize * fspectate_showinputs_percentsizeValue), ScreenScale(100 * fspectate_showinputs_percentsizeValue))
