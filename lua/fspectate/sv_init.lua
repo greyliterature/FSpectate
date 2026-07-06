@@ -56,11 +56,11 @@ function FSpectate.startSpectating(ply, target, canExitSpectate)
     ply:ExitVehicle()
 
     net.Start("FSpectate")
+        net.WriteBool((canExitSpectate and canExitSpectate == true) or true)
         net.WriteBool(target == nil)
         if IsValid(ply.FSpectatingEnt) then
             net.WriteEntity(ply.FSpectatingEnt)
         end
-        net.WriteBool(canExitSpectate == true or canExitSpectate == nil)
     net.Send(ply)
 
     local targetText = IsValid(target) and target:IsPlayer() and (target:Nick() .. " (" .. target:SteamID() .. ")") or IsValid(target) and "an entity" or ""
