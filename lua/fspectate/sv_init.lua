@@ -1,6 +1,9 @@
+FSpectate = {}
+
 util.AddNetworkString("FSpectate")
 util.AddNetworkString("FSpectateTarget")
 util.AddNetworkString("FSpectateSendInputs")
+util.AddNetworkString("FSpectateForceUnspectate")
 util.AddNetworkString("FSpectateNetworkPlayerInputs")
 
 local function findPlayer(info)
@@ -39,7 +42,7 @@ local function clearInvalidSpectators()
     end
 end
 
-local function startSpectating(ply, target)
+function FSpectate.startSpectating(ply, target, canExitSpectate)
     local canSpectate = hook.Call("FSpectate_canSpectate", nil, ply, target)
     if canSpectate == false then return end
 
@@ -53,6 +56,7 @@ local function startSpectating(ply, target)
     ply:ExitVehicle()
 
     net.Start("FSpectate")
+        net.WriteBool(canExitSpectate == true or canExitSpectate == nil)
         net.WriteBool(target == nil)
         if IsValid(ply.FSpectatingEnt) then
             net.WriteEntity(ply.FSpectatingEnt)
@@ -64,6 +68,11 @@ local function startSpectating(ply, target)
     hook.Call("FSpectate_start", nil, ply, target)
 end
 
+function FSpectate.forceUnspectate(ply)
+    net.Start("FSpectateForceUnspectate")
+    net.Send(ply)
+end
+
 local function Spectate(ply, cmd, args)
     CAMI.PlayerHasAccess(ply, "FSpectate", function(b, _)
         if not b then ply:ChatPrint("No Access!") return end
@@ -71,7 +80,7 @@ local function Spectate(ply, cmd, args)
         local target = findPlayer(args[1])
         if target == ply then ply:ChatPrint("Invalid target!") return end
 
-        startSpectating(ply, target)
+        FSpectate.startSpectating(ply, target)
     end)
 end
 concommand.Add("FSpectate", Spectate)
@@ -80,7 +89,7 @@ net.Receive("FSpectateTarget", function(_, ply)
     CAMI.PlayerHasAccess(ply, "FSpectate", function(b, _)
         if not b then ply:ChatPrint("No Access!") return end
 
-        startSpectating(ply, net.ReadEntity())
+        FSpectate.startSpectating(ply, net.ReadEntity())
     end)
 end)
 

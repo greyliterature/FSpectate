@@ -190,7 +190,7 @@ local keysDown = {}
 local function specBinds(ply, bind, pressed)
     local key = input.LookupBinding(bind)
 
-    if bind == "+jump" then
+    if bind == "+jump" and pressed then
         stopSpectating()
         return true
     elseif bind == "+reload" and pressed then
@@ -1140,18 +1140,15 @@ end
 specEnt
 Spectate a player
 ---------------------------------------------------------------------------*/
+local canExitSpectate = true
 local function startSpectate(um)
+    canExitSpectate = net.ReadBool()
     isRoaming = net.ReadBool()
     specEnt = net.ReadEntity()
     specEnt = IsValid(specEnt) and specEnt or nil
-
-    if isRoaming then
-        startFreeRoam()
-    end
-
+    if isRoaming then startFreeRoam() end
     isSpectating = true
     keysDown = {}
-
     hook.Add("CalcView", "FSpectate", specCalcView)
     hook.Add("PlayerBindPress", "FSpectate", specBinds)
     hook.Add("ShouldDrawLocalPlayer", "FSpectate", function() return isRoaming or thirdperson end)
@@ -1160,20 +1157,24 @@ local function startSpectate(um)
     hook.Add("HUDPaint", "FspectateDrawInputs", drawInputs)
     hook.Add("FAdmin_ShowFAdminMenu", "FSpectate", fadminmenushow)
     hook.Add("RenderScreenspaceEffects", "FSpectate", lookingLines)
-
     timer.Create("FSpectatePosUpdate", 0.5, 0, function()
         if not isRoaming then return end
-
         RunConsoleCommand("_FSpectatePosUpdate", roamPos.x, roamPos.y, roamPos.z)
     end)
 end
+
 net.Receive("FSpectate", startSpectate)
 
 /*---------------------------------------------------------------------------
 stopSpectating
 Stop spectating a player
 ---------------------------------------------------------------------------*/
-stopSpectating = function()
+stopSpectating = function(forced)
+    if canExitSpectate ~= true and forced ~= true then
+        chat.AddText("Can't exit spectate right now")
+        return
+    end
+
     hook.Remove("CalcView", "FSpectate")
     hook.Remove("PlayerBindPress", "FSpectate")
     hook.Remove("ShouldDrawLocalPlayer", "FSpectate")
@@ -1182,17 +1183,15 @@ stopSpectating = function()
     hook.Remove("HUDPaint", "FspectateDrawInputs")
     hook.Remove("FAdmin_ShowFAdminMenu", "FSpectate")
     hook.Remove("RenderScreenspaceEffects", "FSpectate")
-
     timer.Remove("FSpectatePosUpdate")
-
     if IsValid(specEnt) then
         specEnt:SetNoDraw(false)
     end
-
     RunConsoleCommand("FSpectate_StopSpectating")
     isSpectating = false
 end
 
+net.Receive("FSpectateForceUnspectate", function() stopSpectating(true) end)
 /*---------------------------------------------------------------------------
 Recieve inputs of other players from server
 ---------------------------------------------------------------------------*/
