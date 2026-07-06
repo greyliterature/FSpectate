@@ -1231,7 +1231,7 @@ end)
 Send inputs of localplayer to server
 ---------------------------------------------------------------------------*/
 hook.Add("StartCommand", "FSpectateTrackInputs", function(ply, ucmd)
-    if isSpectating == true and LocalPlayer:Alive() == false then return end
+    if isSpectating == true and LocalPlayer():Alive() == false then return end
     net.Start("FSpectateSendInputs")
     local numKeysPressed = 0
     for i = KEY_FIRST, KEY_LAST do
