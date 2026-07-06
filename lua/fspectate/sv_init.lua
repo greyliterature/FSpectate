@@ -1,6 +1,9 @@
+FSpectate = {}
+
 util.AddNetworkString("FSpectate")
 util.AddNetworkString("FSpectateTarget")
 util.AddNetworkString("FSpectateSendInputs")
+util.AddNetworkString("FSpectateForceUnspectate")
 util.AddNetworkString("FSpectateNetworkPlayerInputs")
 
 local function findPlayer(info)
@@ -39,7 +42,7 @@ local function clearInvalidSpectators()
     end
 end
 
-local function startSpectating(ply, target)
+function FSpectate.startSpectating(ply, target, canExitSpectate)
     local canSpectate = hook.Call("FSpectate_canSpectate", nil, ply, target)
     if canSpectate == false then return end
 
@@ -57,6 +60,7 @@ local function startSpectating(ply, target)
         if IsValid(ply.FSpectatingEnt) then
             net.WriteEntity(ply.FSpectatingEnt)
         end
+        net.WriteBool(canExitSpectate == true or canExitSpectate == nil)
     net.Send(ply)
 
     local targetText = IsValid(target) and target:IsPlayer() and (target:Nick() .. " (" .. target:SteamID() .. ")") or IsValid(target) and "an entity" or ""
@@ -80,7 +84,7 @@ net.Receive("FSpectateTarget", function(_, ply)
     CAMI.PlayerHasAccess(ply, "FSpectate", function(b, _)
         if not b then ply:ChatPrint("No Access!") return end
 
-        startSpectating(ply, net.ReadEntity())
+        FSpectate.startSpectating(ply, net.ReadEntity())
     end)
 end)
 
