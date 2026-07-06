@@ -75,7 +75,7 @@ local function Spectate(ply, cmd, args)
         local target = findPlayer(args[1])
         if target == ply then ply:ChatPrint("Invalid target!") return end
 
-        startSpectating(ply, target)
+        FSpectate.startSpectating(ply, target)
     end)
 end
 concommand.Add("FSpectate", Spectate)
