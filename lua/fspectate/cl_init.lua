@@ -335,6 +335,21 @@ local function specThink()
 end
 
 /*---------------------------------------------------------------------------
+hideHUD
+Hide distracting hud elements while spectating
+---------------------------------------------------------------------------*/
+local whitelistedHUDElements = {
+    ["CHudCrosshair"] = true,
+    ["CHudGMod"] = true,
+    ["CHudChat"] = true,
+    ["CFPSPanel"] = true,
+}
+local function hideHUD(elementName)
+    if whitelistedHUDElements[elementName] then return end
+    return false
+end
+
+/*---------------------------------------------------------------------------
 drawInputs
 Draw spectated player's inputs on screen
 ---------------------------------------------------------------------------*/
@@ -1159,6 +1174,7 @@ local function startSpectate(um)
     hook.Add("HUDPaint", "FspectateDrawInputs", drawInputs)
     hook.Add("FAdmin_ShowFAdminMenu", "FSpectate", fadminmenushow)
     hook.Add("RenderScreenspaceEffects", "FSpectate", lookingLines)
+    hook.Add("HUDShouldDraw", "FSpectate", hideHUD)
     timer.Create("FSpectatePosUpdate", 0.5, 0, function()
         if not isRoaming then return end
         RunConsoleCommand("_FSpectatePosUpdate", roamPos.x, roamPos.y, roamPos.z)
@@ -1185,6 +1201,7 @@ stopSpectating = function(forced)
     hook.Remove("HUDPaint", "FspectateDrawInputs")
     hook.Remove("FAdmin_ShowFAdminMenu", "FSpectate")
     hook.Remove("RenderScreenspaceEffects", "FSpectate")
+    hook.Remove("HUDShouldDraw", "FSpectate")
     timer.Remove("FSpectatePosUpdate")
     if IsValid(specEnt) then
         specEnt:SetNoDraw(false)
