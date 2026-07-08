@@ -1216,6 +1216,8 @@ Recieve inputs of other players from server
 ---------------------------------------------------------------------------*/
 net.Receive("FSpectateNetworkPlayerInputs", function()
     local ply = net.ReadPlayer()
+    if not IsValid(ply) then return end
+    if ply == LocalPlayer() then return end
     local numKeysPressed = net.ReadUInt(7)
     local keyChunksAmount = math.floor(KEY_LAST / 32) + 1 -- uint32 isnt precise enough for a large bitflag, KEY_LAST (107) has to be made into 4 bitflags 
     for chunk = 1, keyChunksAmount do
