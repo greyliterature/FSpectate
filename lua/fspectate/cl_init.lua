@@ -1168,7 +1168,7 @@ local function startSpectate(um)
     keysDown = {}
     hook.Add("CalcView", "FSpectate", specCalcView)
     hook.Add("PlayerBindPress", "FSpectate", specBinds)
-    hook.Add("ShouldDrawLocalPlayer", "FSpectate", function() return isRoaming or thirdperson end)
+    hook.Add("ShouldDrawLocalPlayer", "FSpectate", function() return true end)
     hook.Add("Think", "FSpectate", specThink)
     hook.Add("HUDPaint", "FSpectate", drawHelp)
     hook.Add("HUDPaint", "FspectateDrawInputs", drawInputs)
