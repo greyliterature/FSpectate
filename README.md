@@ -16,7 +16,7 @@ etc.
 Player beams coming from the barrel of their gun was odd (especially with the physgun) and not very useful. <br/>
 Beams have been changed to start from the shootpos of the player instead to be more intuitive. <br/>
 
-## Players can be forced into spectate and not exit
+## Players can be forced into spectate and made unable to exit
 This allows developers to force their players into spectate for custom gamemodes instead of using the, in my experience, worse gmod PLAYER:Spectate() system <br/>
 
 ## drawInputs()
