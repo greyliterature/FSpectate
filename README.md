@@ -21,6 +21,7 @@ This allows developers to force their players into spectate for custom gamemodes
 
 ## drawInputs()
 All of the spectated player's inputs are shown on screen to the spectator as a keyboard. <br/>
+This is done by telling the client to send their inputs on StartCommand in the cl_init.lua file.
 
 ## Spectating while dead
 Any player that is spectating while dead will have their viewangle set to where they were last looking before spectating. <br/>
