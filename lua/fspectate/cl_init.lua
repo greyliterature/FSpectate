@@ -199,6 +199,26 @@ local function spectateLookingAt()
 end
 
 /*---------------------------------------------------------------------------
+updateSpectatablePlayers
+Updates table of players that the localplayer can spectate
+---------------------------------------------------------------------------*/
+local spectatablePlayers = {}
+local function updateSpectatablePlayers()
+    spectatablePlayers = {}
+    for i, ply in player.Iterator() do
+        spectatablePlayers[i] = ply
+    end
+
+    for i = #spectatablePlayers, 1, -1 do
+        local ply = spectatablePlayers[i]
+        local canSpecPlayer = hook.Run("FSpectate_canSpectatePlayer", ply)
+        if canSpecPlayer == false or ply == LocalPlayer() then
+            table.remove(spectatablePlayers, i)
+        end
+    end
+end
+
+/*---------------------------------------------------------------------------
 specBinds
 Change binds to perform spectate specific tasks
 ---------------------------------------------------------------------------*/
