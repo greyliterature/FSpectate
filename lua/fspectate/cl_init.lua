@@ -1271,10 +1271,8 @@ net.Receive("FSpectateNetworkPlayerInputs", function()
         ply["pressedKeys" .. chunk] = 0
     end
 
-    --ply.pressedKeysBitFlag = 0
     for i = 1, numKeysPressed do
         local key = net.ReadUInt(8)
-        --print(key)
         local chunk = math.floor(key / 32) + 1
         ply["pressedKeys" .. chunk] = bit.bor(ply["pressedKeys" .. chunk], bit.lshift(1, key % 32))
     end
