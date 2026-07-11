@@ -279,6 +279,8 @@ local LineMat = Material("cable/new_cable_lit")
 local linesToDraw = {}
 local function lookingLines()
     if not linesToDraw[0] then return end
+    local canShowBeams = hook.Run("FSpectate_canShowBeams")
+    if canShowBeams == false then return end
 
     render.SetMaterial(LineMat)
 
