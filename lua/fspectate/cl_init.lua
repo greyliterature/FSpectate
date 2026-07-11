@@ -239,8 +239,10 @@ local function specBinds(ply, bind, pressed)
             roamPos = roamPos + LocalPlayer():GetAimVector() * 500
             return true
         end
-        thirdperson = not thirdperson
-
+        local canThirdPerson = hook.Run("FSpectate_canThirdPerson")
+        if canThirdPerson ~= false then
+            thirdperson = not thirdperson
+        end
         return true
     elseif isRoaming and not LocalPlayer():KeyDown(IN_USE) then
         local keybind = string.upper(string.match(bind, "+([a-z A-Z 0-9]+)") or "")
