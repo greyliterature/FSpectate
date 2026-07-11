@@ -1139,21 +1139,25 @@ local function drawHelp()
 
 
     local target = findNearestObject()
-    local pls = player.GetAll()
-    for i = 1, #pls do
-        local ply = pls[i]
-        if not IsValid(ply) then continue end
-        if not isRoaming and ply == specEnt then continue end
 
-        local pos = ply:GetShootPos():ToScreen()
-        if not pos.visible then continue end
+    local canShowESP = hook.Run("FSpectate_canShowESP")
+    if canShowESP ~= false then
+        local pls = player.GetAll()
+        for i = 1, #pls do
+            local ply = pls[i]
+            if not IsValid(ply) then continue end
+            if not isRoaming and ply == specEnt then continue end
 
-        local x, y = pos.x, pos.y
+            local pos = ply:GetShootPos():ToScreen()
+            if not pos.visible then continue end
 
-        draw.RoundedBox(2, x, y - 6, 12, 12, team.GetColor(ply:Team()))
-        draw.WordBox(2, x, y - 66, ply:Nick(), "UiBold", uiBackground, uiForeground)
-        draw.WordBox(2, x, y - 46, "Health: " .. ply:Health(), "UiBold", uiBackground, uiForeground)
-        draw.WordBox(2, x, y - 26, ply:GetUserGroup(), "UiBold", uiBackground, uiForeground)
+            local x, y = pos.x, pos.y
+
+            draw.RoundedBox(2, x, y - 6, 12, 12, team.GetColor(ply:Team()))
+            draw.WordBox(2, x, y - 66, ply:Nick(), "UiBold", uiBackground, uiForeground)
+            draw.WordBox(2, x, y - 46, "Health: " .. ply:Health(), "UiBold", uiBackground, uiForeground)
+            draw.WordBox(2, x, y - 26, ply:GetUserGroup(), "UiBold", uiBackground, uiForeground)
+        end
     end
 
     if not isRoaming then return end
