@@ -376,6 +376,7 @@ local whitelistedHUDElements = {
     ["CHudGMod"] = true,
     ["CHudChat"] = true,
     ["CFPSPanel"] = true,
+    ["NetGraph"] = true,
 }
 local function hideHUD(elementName)
     if whitelistedHUDElements[elementName] then return end
