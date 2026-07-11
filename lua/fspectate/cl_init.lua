@@ -187,15 +187,7 @@ Spectate the person you're looking at while you're roaming
 ---------------------------------------------------------------------------*/
 local function spectateLookingAt()
     local obj = findNearestObject()
-
-    if not IsValid(obj) then return end
-
-    isRoaming = false
-    specEnt = obj
-
-    net.Start("FSpectateTarget")
-        net.WriteEntity(obj)
-    net.SendToServer()
+    FSpectate.spectateEntity(obj)
 end
 
 /*---------------------------------------------------------------------------
