@@ -1154,7 +1154,7 @@ startFreeRoam = function()
 end
 
 /*---------------------------------------------------------------------------
-specEnt
+startSpectate
 Spectate a player
 ---------------------------------------------------------------------------*/
 local canExitSpectate = true
