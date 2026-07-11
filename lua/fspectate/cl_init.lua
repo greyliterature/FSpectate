@@ -166,6 +166,23 @@ local function findNearestObject()
 end
 
 /*---------------------------------------------------------------------------
+FSpectate.spectateEntity
+Spectate a target entity 
+---------------------------------------------------------------------------*/
+function FSpectate.spectateEntity(obj)
+    if not IsValid(obj) then return end
+    local canSpecPlayer = hook.Run("FSpectate_canSpectatePlayer", obj)
+    if canSpecPlayer == false then return end
+    local canThirdPerson = hook.Run("FSpectate_canThirdPerson")
+    thirdperson = ((canThirdPerson  ~= false and thirdperson) or false)
+    isRoaming = false
+    specEnt = obj
+    net.Start("FSpectateTarget")
+        net.WriteEntity(obj)
+    net.SendToServer()
+end
+
+/*---------------------------------------------------------------------------
 Spectate the person you're looking at while you're roaming
 ---------------------------------------------------------------------------*/
 local function spectateLookingAt()
