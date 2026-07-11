@@ -1168,6 +1168,16 @@ end
 Start roaming free, rather than spectating a given player
 ---------------------------------------------------------------------------*/
 startFreeRoam = function()
+    local canFreeRoam = hook.Run("FSpectate_canFreeRoam")
+    updateSpectatablePlayers()
+    canFreeRoam = ((table.Count(spectatablePlayers) == 0 and true) or canFreeRoam) -- if there are no players to spectate then the player might as well be allow to freeroam (there are annoying errors otherwise).
+    if canFreeRoam == false then
+        isRoaming = false
+        if spectatablePlayers[1] and IsValid(spectatablePlayers[1]) then
+            FSpectate.spectateEntity(spectatablePlayers[1])
+        end
+        return
+    end
     roamPos = isSpectating and roamPos or LocalPlayer():GetShootPos()
 
     if IsValid(specEnt) then
