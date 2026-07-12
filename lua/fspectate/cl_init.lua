@@ -8,6 +8,7 @@ local isRoaming = false
 local roamPos -- the position when roaming free
 local roamVelocity = Vector(0)
 local thirdPersonDistance = 100
+local canExitSpectate = true
 
 /*---------------------------------------------------------------------------
 Returns if the localplayer is spectating
@@ -1046,7 +1047,7 @@ local KeyboardInputs = {
         keysize = 100
     },
 }
- 
+
 local MouseInputs = {
     ["ScU"] = {
         input = MOUSE_WHEEL_UP,
@@ -1205,7 +1206,6 @@ end
 startSpectate
 Spectate a player
 ---------------------------------------------------------------------------*/
-local canExitSpectate = true
 local function startSpectate(um)
     canExitSpectate = net.ReadBool()
     isRoaming = net.ReadBool()
@@ -1324,3 +1324,4 @@ hook.Add("StartCommand", "FSpectateTrackInputs", function(ply, ucmd)
 
     net.SendToServer()
 end)
+
