@@ -141,7 +141,14 @@ local function findNearestObject()
     local lookingAt = util.QuickTrace(fromPos, aimvec * 5000, LocalPlayer())
     local ent = lookingAt.Entity
 
-    if IsValid(ent) then return ent end
+    if IsValid(ent) then
+        local canSpecEnt = hook.Run("FSpectate_canSpectatePlayer", ent)
+        if canSpecEnt ~= false then
+            return ent
+        else
+            return
+        end
+    end
 
     local foundPly, foundDot = nil, 0
 
@@ -162,6 +169,8 @@ local function findNearestObject()
 
         foundPly, foundDot = ply, dot
     end
+    local canSpecPlayer = hook.Run("FSpectate_canSpectatePlayer", foundPly)
+    if canSpecPlayer == false then return end
 
     return foundPly
 end
@@ -212,6 +221,228 @@ local function updateSpectatablePlayers()
 end
 
 /*---------------------------------------------------------------------------
+specMenu
+VGUI panel for showing spectate options
+---------------------------------------------------------------------------*/
+local color_transparentblack = Color(0, 0, 0, 240)
+--
+local spectatedPlayerIndex = 1
+local ScreenPanel = nil
+local function showSpecMenu()
+    if IsValid(ScreenPanel) then ScreenPanel:Remove() return end
+    ScreenPanel = vgui.Create("DPanel")
+    ScreenPanel:SetSize(ScrW(), ScrH())
+    ScreenPanel:SetMouseInputEnabled(true)
+    ScreenPanel:SetKeyboardInputEnabled(true)
+    ScreenPanel:MakePopup()
+
+    function ScreenPanel.OnKeyCodePressed(self, key)
+        if key == KEY_LCONTROL then self:Remove() end
+    end
+
+    function ScreenPanel.Paint(self, w, h)
+    end
+
+    frame = vgui.Create("DPanel", ScreenPanel)
+    frame:SetWide(ScrW())
+    frame:SetPos(0, ScrH() * 0.9)
+    frame:SetTall(ScrH() * 0.1)
+
+    function frame.Paint(self, w, h)
+        surface.SetDrawColor(color_transparentblack)
+        surface.DrawRect(0, 0, w, h)
+    end
+    -- middle dropdown
+    local SelectedPlayer = specEnt
+    --
+    local MiddleDropDown = vgui.Create("DPanel", frame)
+    MiddleDropDown:SetSize(frame:GetWide() * 0.5, frame:GetTall() * 0.5)
+    MiddleDropDown:SetPos((frame:GetWide() - MiddleDropDown:GetWide()) * 0.5, (frame:GetTall() - MiddleDropDown:GetTall()) * 0.5)
+    local OutlineThickness = 2
+    local TriangLength = ScrW() * 0.004
+    local TriangHeight = ScrH() * 0.007
+    local DownwardsTriangle = {
+        { x = MiddleDropDown:GetWide() * 0.98, y = (MiddleDropDown:GetTall() + TriangHeight) * 0.5},
+        { x = (MiddleDropDown:GetWide() - TriangLength) * 0.98, y = (MiddleDropDown:GetTall() - TriangHeight) * 0.5},
+        { x = (MiddleDropDown:GetWide() + TriangLength) * 0.98, y = (MiddleDropDown:GetTall() - TriangHeight) * 0.5}
+    }
+
+    function MiddleDropDown.Paint(self, w, h)
+        surface.SetDrawColor(color_black)
+        surface.DrawRect(0, 0, w, h)
+        surface.SetDrawColor(color_white)
+        surface.DrawOutlinedRect(0, 0, w, h, OutlineThickness)
+        draw.NoTexture()
+        surface.DrawPoly(DownwardsTriangle)
+        draw.SimpleText(((IsValid(SelectedPlayer) and SelectedPlayer:Nick()) or (table.Count(spectatablePlayers) == 0 and "no spectatable players")) or "no selected player", "Trebuchet24", w * 0.5, h * 0.5, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+    end
+
+    updateSpectatablePlayers()
+    local DropDownPlayerOptions = nil
+    function MiddleDropDown.OnMousePressed(self, button)
+        if IsValid(DropDownPlayerOptions) then DropDownPlayerOptions:Remove() return end
+        DropDownPlayerOptions = vgui.Create("DPanel", ScreenPanel)
+        DropDownPlayerOptions:SetSize(MiddleDropDown:GetWide(), 0)
+        DropDownPlayerOptions:SetPos(MiddleDropDown:LocalToScreen(0, 0))
+        function DropDownPlayerOptions.Paint(_, w, h)
+        end
+
+        for i, ply in ipairs(spectatablePlayers) do
+            local canSpecPlayer = hook.Run("FSpectate_canSpectatePlayer", ply)
+            if canSpecPlayer == false or ply == LocalPlayer() then
+                continue
+            else
+                local PlayerCardHeight = MiddleDropDown:GetTall()
+                local PlayerCard = vgui.Create("DPanel", DropDownPlayerOptions)
+                PlayerCard:SetSize(DropDownPlayerOptions:GetWide(), PlayerCardHeight)
+                PlayerCard:SetPos(0, (i - 1) * PlayerCardHeight)
+                --
+                DropDownPlayerOptions:SetTall(DropDownPlayerOptions:GetTall() + PlayerCardHeight)
+                DropDownPlayerOptions:SetY(DropDownPlayerOptions:GetY() - PlayerCardHeight)
+                function PlayerCard.Paint(_, w, h)
+                    surface.SetDrawColor(color_black)
+                    surface.DrawRect(0, 0, w, h)
+                    --surface.SetDrawColor(Color(255, 0, 255))
+                    --surface.DrawRect(0 - 20, 0, 0 + w, 0 + h - 2, true)
+                    -- outline
+                    surface.SetDrawColor(color_white)
+                    surface.DrawRect(0, 0, OutlineThickness, h)
+                    surface.DrawRect(w - OutlineThickness, 0, OutlineThickness, h) -- right
+                    if i == table.Count(spectatablePlayers) then
+                        surface.DrawRect(0, 0, w, OutlineThickness * 0.5) -- top
+                    else
+                        surface.DrawRect(0, 0, w, OutlineThickness) -- top
+                    end
+                    surface.DrawRect(0, h - OutlineThickness * 0.5, w, OutlineThickness * 0.5) -- bottom
+                    surface.SetFont("Trebuchet24")
+                    draw.SimpleText(ply:Nick(), "Trebuchet24", w * 0.5, h * 0.5, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+
+                end
+                function PlayerCard.OnMousePressed(_, _)
+                    if canSpecPlayer == false then return end
+                    SelectedPlayer = ply
+                    FSpectate.spectateEntity(SelectedPlayer)
+                    DropDownPlayerOptions:Remove()
+                end
+            end
+        end
+    end
+    local ArrowGap = frame:GetWide() * 0.005
+    local ArrowSizeX, ArrowSizeY = MiddleDropDown:GetTall() * 0.9, MiddleDropDown:GetTall()
+    local LeftArrow = vgui.Create("DPanel", frame)
+    LeftArrow:SetSize(ArrowSizeX, ArrowSizeY)
+    LeftArrow:SetPos(MiddleDropDown:GetX() - ArrowSizeX - ArrowGap, (frame:GetTall() - ArrowSizeY) * 0.5)
+    local TriangleLength = ScrW() * 0.004
+    local TriangleHeight = ScrH() * 0.02
+    local LeftTriangle = {
+        { x = (ArrowSizeX - TriangleLength) * 0.5, y = ArrowSizeY * 0.5 },
+        { x = (ArrowSizeX + TriangleLength) * 0.5, y = (ArrowSizeY - TriangleHeight) * 0.5 },
+        { x = (ArrowSizeX + TriangleLength) * 0.5, y = (ArrowSizeY + TriangleHeight) * 0.5 }
+    }
+
+    function LeftArrow.Paint(self, w, h)
+        surface.SetDrawColor(color_black)
+        surface.DrawRect(0, 0, w, h)
+        surface.SetDrawColor(color_white)
+        surface.DrawOutlinedRect(0, 0, w, h, OutlineThickness)
+        draw.NoTexture()
+        surface.DrawPoly(LeftTriangle)
+    end
+
+    function LeftArrow.OnMousePressed(self)
+        spectatedPlayerIndex = spectatedPlayerIndex - 1
+        if spectatedPlayerIndex > #spectatablePlayers then
+            spectatedPlayerIndex = 1
+        elseif spectatedPlayerIndex <= 0 then
+            spectatedPlayerIndex = #spectatablePlayers
+        end
+
+        local canSpecPlayer = hook.Run("FSpectate_canSpectatePlayer", spectatablePlayers[spectatedPlayerIndex])
+        if canSpecPlayer ~= false then
+            FSpectate.spectateEntity(spectatablePlayers[spectatedPlayerIndex])
+            SelectedPlayer = spectatablePlayers[spectatedPlayerIndex]
+        else
+            chat.AddText("Can't spectate " .. ((IsValid(spectatablePlayers[spectatedPlayerIndex]) and spectatablePlayers[spectatedPlayerIndex]:Nick()) or "N/A"))
+            local count = 1
+            for i = #spectatablePlayers, 1, -1 do
+                if spectatablePlayers[i] == specEnt then
+                    count = count + 1
+                    continue
+                end
+                canSpecPlayer = hook.Run("FSpectate_canSpectatePlayer", spectatablePlayers[i])
+                if canSpecPlayer == false  then
+                    count = count - 1
+                    if spectatablePlayers[i] then
+                        table.remove(spectatablePlayers, i)
+                    end
+                else
+                    count = count + 1
+                end
+            end
+            spectatedPlayerIndex = (count > 1 and count - 1) or #spectatablePlayers
+            FSpectate.spectateEntity(spectatablePlayers[spectatedPlayerIndex])
+        end
+    end
+    local RightArrow = vgui.Create("DPanel", frame)
+    RightArrow:SetSize(ArrowSizeX, ArrowSizeY)
+    RightArrow:SetPos(MiddleDropDown:GetX() + MiddleDropDown:GetWide() + ArrowGap, (frame:GetTall() - ArrowSizeY) * 0.5)
+    local RightTriangle = {
+        { x = (ArrowSizeX + TriangleLength) * 0.5, y = ArrowSizeY * 0.5 },
+        { x = (ArrowSizeX - TriangleLength) * 0.5, y = (ArrowSizeY + TriangleHeight) * 0.5 },
+        { x = (ArrowSizeX - TriangleLength) * 0.5, y = (ArrowSizeY - TriangleHeight) * 0.5 }
+    }
+
+    function RightArrow.Paint(self, w, h)
+        surface.SetDrawColor(color_black)
+        surface.DrawRect(0, 0, w, h)
+        surface.SetDrawColor(color_white)
+        surface.DrawOutlinedRect(0, 0, w, h, OutlineThickness)
+        draw.NoTexture()
+        surface.DrawPoly(RightTriangle)
+    end
+
+    function RightArrow.OnMousePressed(self)
+        spectatedPlayerIndex = spectatedPlayerIndex + 1
+        if spectatedPlayerIndex > #spectatablePlayers then
+            spectatedPlayerIndex = 1
+        elseif spectatedPlayerIndex <= 0 then
+            spectatedPlayerIndex = #spectatablePlayers
+        end
+
+        local canSpecPlayer = hook.Run("FSpectate_canSpectatePlayer", spectatablePlayers[spectatedPlayerIndex])
+        if canSpecPlayer ~= false then
+            FSpectate.spectateEntity(spectatablePlayers[spectatedPlayerIndex])
+            SelectedPlayer = spectatablePlayers[spectatedPlayerIndex]
+        else
+            chat.AddText("Can't spectate " .. ((IsValid(spectatablePlayers[spectatedPlayerIndex]) and spectatablePlayers[spectatedPlayerIndex]:Nick()) or "N/A"))
+            local count = 1
+            for i = #spectatablePlayers, 1, -1 do
+                if spectatablePlayers[i] == specEnt then
+                    count = count + 1
+                    continue
+                end
+                canSpecPlayer = hook.Run("FSpectate_canSpectatePlayer", spectatablePlayers[i])
+                if canSpecPlayer == false  then
+                    count = count - 1
+                    if spectatablePlayers[i] then
+                        table.remove(spectatablePlayers, i)
+                    end
+                else
+                    count = count + 1
+                end
+            end
+            spectatedPlayerIndex = (count < #spectatablePlayers and count) or 1
+            FSpectate.spectateEntity(spectatablePlayers[spectatedPlayerIndex])
+        end
+    end
+
+    --local OptionsMenu = vgui.Create("DPanel")
+end
+
+local function hideSpecMenu()
+    if IsValid(ScreenPanel) then ScreenPanel:Remove() return end
+end
+/*---------------------------------------------------------------------------
 specBinds
 Change binds to perform spectate specific tasks
 ---------------------------------------------------------------------------*/
@@ -222,6 +453,9 @@ local function specBinds(ply, bind, pressed)
 
     if bind == "+jump" and pressed then
         stopSpectating()
+        return true
+    elseif bind == "+duck" and pressed then
+        showSpecMenu()
         return true
     elseif bind == "+reload" and pressed then
         local pos = getCalcView().origin - Vector(0, 0, 64)
@@ -1207,6 +1441,9 @@ startSpectate
 Spectate a player
 ---------------------------------------------------------------------------*/
 local function startSpectate(um)
+    --local canFreeRoam = hook.Run("FSpectate_canFreeRoam")
+    --updateSpectatablePlayers()
+    --canFreeRoam = table.Count(spectatablePlayers) > 0 and canFreeRoam or true
     canExitSpectate = net.ReadBool()
     isRoaming = net.ReadBool()
     specEnt = net.ReadEntity()
@@ -1250,6 +1487,7 @@ stopSpectating = function(forced)
     hook.Remove("FAdmin_ShowFAdminMenu", "FSpectate")
     hook.Remove("RenderScreenspaceEffects", "FSpectate")
     hook.Remove("HUDShouldDraw", "FSpectate")
+    hideSpecMenu()
     timer.Remove("FSpectatePosUpdate")
     if IsValid(specEnt) then
         specEnt:SetNoDraw(false)
