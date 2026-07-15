@@ -169,9 +169,11 @@ local function findNearestObject()
 
         foundPly, foundDot = ply, dot
     end
-    local canSpecPlayer = hook.Run("FSpectate_canSpectatePlayer", foundPly)
-    if canSpecPlayer == false then return end
 
+    if IsValid(foundPly) then 
+        local canSpecPlayer = hook.Run("FSpectate_canSpectatePlayer", foundPly)
+        if canSpecPlayer == false then return end
+    end
     return foundPly
 end
 
