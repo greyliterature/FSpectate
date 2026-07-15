@@ -52,6 +52,7 @@ function FSpectate.startSpectating(ply, target, canExitSpectate)
     ply.FSpectatingEnt = target
     ply.FSpectating = true
     ply.FSpectateViewAngles = ply:GetAngles()
+    ply.FSpectatecanExitSpectate = canExitSpectate
     FSpectating[ply] = true
 
     ply:ExitVehicle()
@@ -70,6 +71,7 @@ function FSpectate.startSpectating(ply, target, canExitSpectate)
 end
 
 function FSpectate.forceUnspectate(ply)
+    ply.FSpectatecanExitSpectate = nil
     net.Start("FSpectateForceUnspectate")
     net.Send(ply)
 end
@@ -80,8 +82,7 @@ local function Spectate(ply, cmd, args)
 
         local target = findPlayer(args[1])
         if target == ply then ply:ChatPrint("Invalid target!") return end
-
-        FSpectate.startSpectating(ply, target)
+        FSpectate.startSpectating(ply, target, ply.FSpectatecanExitSpectate)
     end)
 end
 concommand.Add("FSpectate", Spectate)
@@ -90,7 +91,7 @@ net.Receive("FSpectateTarget", function(_, ply)
     CAMI.PlayerHasAccess(ply, "FSpectate", function(b, _)
         if not b then ply:ChatPrint("No Access!") return end
 
-        FSpectate.startSpectating(ply, net.ReadEntity())
+        FSpectate.startSpectating(ply, net.ReadEntity(), ply.FSpectatecanExitSpectate)
     end)
 end)
 
@@ -145,6 +146,7 @@ local function endSpectate(ply, cmd, args)
     ply.FSpectatingEnt = nil
     ply.FSpectating = nil
     ply.FSpectateViewAngles = nil
+    ply.FSpectatecanExitSpectate = nil
     ply.FSpectatePos = nil
     FSpectating[ply] = nil
     hook.Call("FSpectate_stop", nil, ply)
