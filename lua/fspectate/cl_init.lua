@@ -3,7 +3,7 @@ FSpectate = {}
 local stopSpectating, startFreeRoam
 local isSpectating = false
 local specEnt
-local thirdperson = true
+local thirdperson = false
 local isRoaming = false
 local roamPos -- the position when roaming free
 local roamVelocity = Vector(0)
@@ -170,13 +170,12 @@ local function findNearestObject()
         foundPly, foundDot = ply, dot
     end
 
-    if IsValid(foundPly) then 
+    if IsValid(foundPly) then
         local canSpecPlayer = hook.Run("FSpectate_canSpectatePlayer", foundPly)
         if canSpecPlayer == false then return end
     end
     return foundPly
 end
-
 
 /*---------------------------------------------------------------------------
 FSpectate.spectateEntity
@@ -222,6 +221,33 @@ local function updateSpectatablePlayers()
         end
     end
 end
+/*---------------------------------------------------------------------------
+spectateNextPlayer
+Spectate the next player
+Skip should be -1 (last player) or 1 (next player)
+---------------------------------------------------------------------------*/
+local function MathWrap(num, floor, ceil)
+    if num <= ceil and num >= floor then
+        return num
+    elseif num > ceil then
+        return floor
+    elseif num < floor then
+        return ceil
+    end
+end
+
+local spectatedPlayerIndex = 0
+function spectateNextPlayer(skip)
+    updateSpectatablePlayers()
+    spectatedPlayerIndex = MathWrap(spectatedPlayerIndex + skip, 1, #spectatablePlayers)
+    local canSpecPlayer = hook.Run("FSpectate_canSpectatePlayer", spectatablePlayers[spectatedPlayerIndex])
+    if canSpecPlayer ~= false then
+        FSpectate.spectateEntity(spectatablePlayers[spectatedPlayerIndex])
+    else -- this should never happen, updateSpectatablePlayers() at the top of the function should update the table accurately
+        chat.AddText("Can't spectate " .. ((IsValid(spectatablePlayers[spectatedPlayerIndex]) and spectatablePlayers[spectatedPlayerIndex]:Nick()) or "N/A"))
+        spectateNextPlayer(skip)
+    end
+end
 
 /*---------------------------------------------------------------------------
 specBinds
@@ -233,7 +259,17 @@ local function specBinds(ply, bind, pressed)
     local key = input.LookupBinding(bind)
 
     if bind == "+jump" and pressed then
-        stopSpectating()
+        if not isRoaming then
+            if thirdperson == true then
+                startFreeRoam()
+            end
+            thirdperson = not thirdperson
+        elseif isRoaming then
+            stopSpectating()
+        end
+        return true
+    elseif bind == "+duck" and pressed then
+        showSpecMenu()
         return true
     elseif bind == "+reload" and pressed then
         local pos = getCalcView().origin - Vector(0, 0, 64)
@@ -242,7 +278,7 @@ local function specBinds(ply, bind, pressed)
         stopSpectating()
     elseif bind == "+attack" and pressed then
         if not isRoaming then
-            startFreeRoam()
+            spectateNextPlayer(1)
         else
             spectateLookingAt()
         end
@@ -252,10 +288,12 @@ local function specBinds(ply, bind, pressed)
             roamPos = roamPos + LocalPlayer():GetAimVector() * 500
             return true
         end
+        /*
         local canThirdPerson = hook.Run("FSpectate_canThirdPerson")
         if canThirdPerson ~= false then
             thirdperson = not thirdperson
         end
+        */
         return true
     elseif isRoaming and not LocalPlayer():KeyDown(IN_USE) then
         local keybind = string.upper(string.match(bind, "+([a-z A-Z 0-9]+)") or "")
@@ -1143,10 +1181,12 @@ local uiForeground, uiBackground = Color(240, 240, 255, 255), Color(20, 20, 20, 
 local red = Color(255, 0, 0, 255)
 local function drawHelp()
     local scrHalfH = math.floor(ScrH() / 2)
-    draw.WordBox(2, 10, scrHalfH, "Left click: (Un)select player to spectate", "UiBold", uiBackground, uiForeground)
-    draw.WordBox(2, 10, scrHalfH + 20, isRoaming and "Right click: quickly move forwards" or "Right click: toggle thirdperson", "UiBold", uiBackground, uiForeground)
-    draw.WordBox(2, 10, scrHalfH + 40, "Jump: Stop spectating", "UiBold", uiBackground, uiForeground)
-    draw.WordBox(2, 10, scrHalfH + 60, "Reload: Stop spectating and teleport", "UiBold", uiBackground, uiForeground)
+    draw.WordBox(2, 10, scrHalfH, (isRoaming == true and "Left click: select player to spectate") or "Left click: spectate next player", "UiBold", uiBackground, uiForeground)
+    draw.WordBox(2, 10, scrHalfH + 20, ((IsValid(specEnt) and thirdperson == false) and "Jump: thirdperson") or (isRoaming == false and "Jump: free roam") or isRoaming == true and "Jump: stop spectating", "UiBold", uiBackground, uiForeground)
+    draw.WordBox(2, 10, scrHalfH + 40, "Reload: Stop spectating and teleport", "UiBold", uiBackground, uiForeground)
+    if isRoaming then
+        draw.WordBox(2, 10, scrHalfH + 60, "Right click: quickly move forwards", "UiBold", uiBackground, uiForeground)
+    end
 
     if FAdmin then
         draw.WordBox(2, 10, scrHalfH + 80, "Opening FAdmin's menu while spectating a player", "UiBold", uiBackground, uiForeground)
@@ -1267,6 +1307,7 @@ stopSpectating = function(forced)
         specEnt:SetNoDraw(false)
     end
     RunConsoleCommand("FSpectate_StopSpectating")
+    thirdperson = false
     isSpectating = false
 end
 
@@ -1336,3 +1377,4 @@ hook.Add("StartCommand", "FSpectateTrackInputs", function(ply, ucmd)
 
     net.SendToServer()
 end)
+
