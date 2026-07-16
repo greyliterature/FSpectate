@@ -268,9 +268,6 @@ local function specBinds(ply, bind, pressed)
             stopSpectating()
         end
         return true
-    elseif bind == "+duck" and pressed then
-        showSpecMenu()
-        return true
     elseif bind == "+reload" and pressed then
         local pos = getCalcView().origin - Vector(0, 0, 64)
         RunConsoleCommand("FTPToPos", string.format("%d, %d, %d", pos.x, pos.y, pos.z),
