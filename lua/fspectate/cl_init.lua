@@ -354,6 +354,45 @@ end
 */
 
 /*---------------------------------------------------------------------------
+drawHitboxes
+---------------------------------------------------------------------------*/
+CreateClientConVar("fspectate_showhitboxes", "1", true, false)
+--
+local HITBOX_GENERIC, HITBOX_LEFTUPPERARM, HITBOX_LEFTFOREARM, HITBOX_LEFTHAND, HITBOX_RIGHTUPPERARM, HITBOX_RIGHTFOREARM, HITBOX_RIGHTHAND, HITBOX_LEFTTHIGH, HITBOX_LEFTCALF, HITBOX_LEFTHEEL, HITBOX_LEFTFOOT, HITBOX_RIGHTTHIGH, HITBOX_RIGHTCALF, HITBOX_RIGHTHEEL, HITBOX_RIGHTFOOT, HITBOX_STOMACH, HITBOX_TORSO, HITBOX_CHEST = 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17
+local HitboxToColor = {
+    [HITBOX_GENERIC] = Color(255, 128, 128), -- actually the head
+    [HITBOX_LEFTUPPERARM] = Color(128, 128, 255),
+    [HITBOX_LEFTFOREARM] = Color(128, 128, 255),
+    [HITBOX_LEFTHAND] = Color(128, 128, 255),
+    [HITBOX_RIGHTUPPERARM] = Color(255, 128, 255),
+    [HITBOX_RIGHTFOREARM] = Color(255, 128, 255),
+    [HITBOX_RIGHTHAND] = Color(255, 128, 255),
+    [HITBOX_LEFTTHIGH] = Color(128, 255, 255),
+    [HITBOX_LEFTCALF] = Color(128, 255, 255),
+    [HITBOX_LEFTHEEL] = Color(128, 255, 255),
+    [HITBOX_LEFTFOOT] = Color(128, 255, 255),
+    [HITBOX_RIGHTTHIGH] = Color(255, 155, 47),
+    [HITBOX_RIGHTCALF] = Color(255, 155, 47),
+    [HITBOX_RIGHTHEEL] = Color(255, 155, 47),
+    [HITBOX_RIGHTFOOT] = Color(255, 155, 47),
+    [HITBOX_STOMACH] = Color(255, 255, 128),
+    [HITBOX_TORSO] = Color(255, 255, 128),
+    [HITBOX_CHEST] = Color(128, 255, 128),
+}
+
+local function drawHitboxes(ply, _)
+    if GetConVar("fspectate_showhitboxes"):GetBool() == false then return end
+    if IsValid(specEnt) and ply == specEnt and not thirdperson then return end
+    for i = HITGROUP_GENERIC, ply:GetHitBoxCount(0) - 1 do
+        if not HitboxToColor[i] then continue end
+        local bone = ply:GetHitBoxBone(i, 0)
+        local bonepos, boneang = ply:GetBonePosition(bone)
+        local mins, maxs =  ply:GetHitBoxBounds(i, 0)
+        render.DrawWireframeBox(bonepos, boneang, mins, maxs, HitboxToColor[i], true)
+    end
+end
+
+/*---------------------------------------------------------------------------
 Spectate think
 Free roaming position updates
 ---------------------------------------------------------------------------*/
@@ -1272,6 +1311,7 @@ local function startSpectate(um)
     hook.Add("FAdmin_ShowFAdminMenu", "FSpectate", fadminmenushow)
     hook.Add("RenderScreenspaceEffects", "FSpectate", lookingLines)
     hook.Add("HUDShouldDraw", "FSpectate", hideHUD)
+    hook.Add("PostPlayerDraw", "FSpectate", drawHitboxes)
     timer.Create("FSpectatePosUpdate", 0.5, 0, function()
         if not isRoaming then return end
         RunConsoleCommand("_FSpectatePosUpdate", roamPos.x, roamPos.y, roamPos.z)
@@ -1299,6 +1339,7 @@ stopSpectating = function(forced)
     hook.Remove("FAdmin_ShowFAdminMenu", "FSpectate")
     hook.Remove("RenderScreenspaceEffects", "FSpectate")
     hook.Remove("HUDShouldDraw", "FSpectate")
+    hook.Remove("PostPlayerDraw", "FSpectate")
     timer.Remove("FSpectatePosUpdate")
     if IsValid(specEnt) then
         specEnt:SetNoDraw(false)
