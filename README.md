@@ -18,7 +18,13 @@ Beams have been changed to start from the shootpos of the player instead to be m
 
 ## Players can be forced into spectate and made unable to exit
 This allows developers to force their players into spectate for custom gamemodes instead of using the, in my experience, worse gmod Player:Spectate() system <br/>
-
+ <br/>
+Functions: <br/>
+FSpectate.startSpectating(ply, target, canExitSpectate) <br/>
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀^ canExitSpectate == true then player can't exit spectate.. <br/>
+FSpectate.forceUnspectate(ply) <br/>
+⠀⠀⠀Client reads a net.sent bool from this function and runs stopSpectating(forced) to exit spectate <br/>
+  
 ## drawInputs()
 All of the spectated player's inputs are shown on screen to the spectator as a keyboard. <br/>
 This is done by telling the client to send their inputs on StartCommand in the cl_init.lua file.
