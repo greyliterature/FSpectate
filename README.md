@@ -22,7 +22,7 @@ For this reason the FSpectate table in sv_init.lua was changed to be global. <br
 <br/>
 Functions: <br/>
 FSpectate.startSpectating(ply, target, canExitSpectate) <br/>
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀^ canExitSpectate == true then player can't exit spectate.. <br/>
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀^ canExitSpectate == false then player can't exit spectate.. (nil / true can) <br/>
 FSpectate.forceUnspectate(ply) <br/>
 ⠀⠀⠀Client reads a net.sent bool from this function and runs stopSpectating(forced) to exit spectate <br/>
   
