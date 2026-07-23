@@ -18,7 +18,8 @@ Beams have been changed to start from the shootpos of the player instead to be m
 
 ## Players can be forced into spectate and made unable to exit
 This allows developers to force their players into spectate for custom gamemodes instead of using the, in my experience, worse gmod Player:Spectate() system <br/>
- <br/>
+For this reason the FSpectate table in sv_init.lua was changed to be global. <br/>
+<br/>
 Functions: <br/>
 FSpectate.startSpectating(ply, target, canExitSpectate) <br/>
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀^ canExitSpectate == true then player can't exit spectate.. <br/>
