@@ -380,7 +380,7 @@ local HitboxToColor = {
     [HITBOX_CHEST] = Color(128, 255, 128),
 }
 
-local function drawHitboxes(ply, _)
+local function drawHitboxes(ply, _) -- from https://steamcommunity.com/sharedfiles/filedetails/?id=219747243
     if GetConVar("fspectate_showhitboxes"):GetBool() == false then return end
     if IsValid(specEnt) and ply == specEnt and not thirdperson then return end
     for i = HITGROUP_GENERIC, ply:GetHitBoxCount(0) - 1 do
