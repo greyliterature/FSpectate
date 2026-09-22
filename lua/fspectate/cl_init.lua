@@ -240,10 +240,17 @@ local spectatedPlayerIndex = 0
 function spectateNextPlayer(skip)
     updateSpectatablePlayers()
     spectatedPlayerIndex = MathWrap(spectatedPlayerIndex + skip, 1, #spectatablePlayers)
+    if specEnt and specEnt == spectatablePlayers[spectatedPlayerIndex] then return end
     local canSpecPlayer = hook.Run("FSpectate_canSpectatePlayer", spectatablePlayers[spectatedPlayerIndex])
     if canSpecPlayer ~= false then
         FSpectate.spectateEntity(spectatablePlayers[spectatedPlayerIndex])
     else -- this should never happen, updateSpectatablePlayers() at the top of the function should update the table accurately
+        if #spectatablePlayers == 0 then
+            chat.AddText("No players left to spectate")
+            startFreeRoam()
+            return
+        end
+
         chat.AddText("Can't spectate " .. ((IsValid(spectatablePlayers[spectatedPlayerIndex]) and spectatablePlayers[spectatedPlayerIndex]:Nick()) or "N/A"))
         spectateNextPlayer(skip)
     end
