@@ -257,6 +257,278 @@ function spectateNextPlayer(skip)
 end
 
 /*---------------------------------------------------------------------------
+Auto Director convar
+Convar that determines if client should switch to spectating another player (like css does, kind of)
+---------------------------------------------------------------------------*/
+CreateClientConVar("fspectate_autodirector", 1, true, true, "Whether or not to use css-style autodirector", 0, 1)
+/*
+Example:
+gameevent.Listen("entity_killed")
+hook.Add("entity_killed", "AutoDirectOnKill", function(data)
+    if GetConVar("fspectate_autodirector"):GetBool() == false then return end
+    if not Entity(data.entindex_killed):IsPlayer() then return end
+    if isRoaming == true then return end
+    local canSpecPlayer = hook.Run("FSpectate_canSpectatePlayer", Entity(data.entindex_attacker))
+    if canSpecPlayer ~= false then
+        hook.Run("FSpectate_autoDirector", Entity(data.entindex_attacker) )
+    end
+end)
+hook.Add("FSpectate_autoDirector", "AutoDirector", function(entToSpectate)
+    FSpectate.spectateEntity(ent)
+end)
+*/
+
+/*---------------------------------------------------------------------------
+specMenu
+VGUI panel for showing spectate options
+---------------------------------------------------------------------------*/
+local color_transparentblack = Color(0, 0, 0, 240)
+--
+local ScreenPanel = nil
+local function showSpecMenu()
+    if IsValid(ScreenPanel) then ScreenPanel:Remove() return end
+    ScreenPanel = vgui.Create("DPanel")
+    ScreenPanel:SetSize(ScrW(), ScrH())
+    ScreenPanel:SetMouseInputEnabled(true)
+    ScreenPanel:SetKeyboardInputEnabled(true)
+    ScreenPanel:MakePopup()
+
+    function ScreenPanel.OnKeyCodePressed(self, key)
+        if key == KEY_LCONTROL then self:Remove() end
+    end
+
+    local DropDownPlayerOptions = nil
+    local DropDownOptions = nil
+    function ScreenPanel.OnMousePressed(self, code)
+        if code == MOUSE_FIRST then
+            if IsValid(DropDownPlayerOptions) then DropDownPlayerOptions:Remove() end
+            if IsValid(DropDownOptions) then DropDownOptions:Remove() end
+        end
+    end
+
+    function ScreenPanel.Paint(self, w, h)
+    end
+
+    frame = vgui.Create("DPanel", ScreenPanel)
+    frame:SetWide(ScrW())
+    frame:SetPos(0, ScrH() * 0.9)
+    frame:SetTall(ScrH() * 0.1)
+
+    function frame.Paint(self, w, h)
+        surface.SetDrawColor(color_transparentblack)
+        surface.DrawRect(0, 0, w, h)
+    end
+    -- middle dropdown
+    --local SelectedPlayer = specEnt
+    --
+    local MiddleDropDown = vgui.Create("DPanel", frame)
+    MiddleDropDown:SetSize(frame:GetWide() * 0.5, frame:GetTall() * 0.5)
+    MiddleDropDown:SetPos((frame:GetWide() - MiddleDropDown:GetWide()) * 0.5, (frame:GetTall() - MiddleDropDown:GetTall()) * 0.5)
+    local OutlineThickness = 2
+    local TriangLength = ScrW() * 0.004
+    local TriangHeight = ScrH() * 0.007
+    local DownwardsTriangle = {
+        {x = MiddleDropDown:GetWide() * 0.98, y = (MiddleDropDown:GetTall() + TriangHeight) * 0.5},
+        {x = (MiddleDropDown:GetWide() - TriangLength) * 0.98, y = (MiddleDropDown:GetTall() - TriangHeight) * 0.5},
+        {x = (MiddleDropDown:GetWide() + TriangLength) * 0.98, y = (MiddleDropDown:GetTall() - TriangHeight) * 0.5}
+    }
+
+    function MiddleDropDown.Paint(self, w, h)
+        surface.SetDrawColor(color_black)
+        surface.DrawRect(0, 0, w, h)
+        surface.SetDrawColor(color_white)
+        surface.DrawOutlinedRect(0, 0, w, h, OutlineThickness)
+        draw.NoTexture()
+        surface.DrawPoly(DownwardsTriangle)
+        draw.SimpleText(((IsValid(specEnt) and specEnt:Nick()) or (table.Count(spectatablePlayers) == 0 and "no spectatable players")) or "no selected player", "Trebuchet24", w * 0.5, h * 0.5, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+    end
+
+    updateSpectatablePlayers()
+    function MiddleDropDown.OnMousePressed(self, button)
+        if IsValid(DropDownPlayerOptions) then DropDownPlayerOptions:Remove() return end
+        DropDownPlayerOptions = vgui.Create("DPanel", ScreenPanel)
+        DropDownPlayerOptions:SetSize(MiddleDropDown:GetWide(), 0)
+        DropDownPlayerOptions:SetPos(MiddleDropDown:LocalToScreen(0, 0))
+        function DropDownPlayerOptions.Paint(_, w, h)
+        end
+
+        for i, ply in ipairs(spectatablePlayers) do
+            local canSpecPlayer = hook.Run("FSpectate_canSpectatePlayer", ply)
+            if canSpecPlayer == false or ply == LocalPlayer() then
+                continue
+            else
+                local PlayerCardHeight = MiddleDropDown:GetTall()
+                local PlayerCard = vgui.Create("DPanel", DropDownPlayerOptions)
+                PlayerCard:SetSize(DropDownPlayerOptions:GetWide(), PlayerCardHeight)
+                PlayerCard:SetPos(0, (i - 1) * PlayerCardHeight)
+                --
+                DropDownPlayerOptions:SetTall(DropDownPlayerOptions:GetTall() + PlayerCardHeight)
+                DropDownPlayerOptions:SetY(DropDownPlayerOptions:GetY() - PlayerCardHeight)
+                function PlayerCard.Paint(_, w, h)
+                    surface.SetDrawColor(color_black)
+                    surface.DrawRect(0, 0, w, h)
+                    --surface.SetDrawColor(Color(255, 0, 255))
+                    --surface.DrawRect(0 - 20, 0, 0 + w, 0 + h - 2, true)
+                    -- outline
+                    surface.SetDrawColor(color_white)
+                    surface.DrawRect(0, 0, OutlineThickness, h)
+                    surface.DrawRect(w - OutlineThickness, 0, OutlineThickness, h) -- right
+                    if i == table.Count(spectatablePlayers) then
+                        surface.DrawRect(0, 0, w, OutlineThickness * 0.5) -- top
+                    else
+                        surface.DrawRect(0, 0, w, OutlineThickness) -- top
+                    end
+                    surface.DrawRect(0, h - OutlineThickness * 0.5, w, OutlineThickness * 0.5) -- bottom
+                    surface.SetFont("Trebuchet24")
+                    draw.SimpleText(ply:Nick(), "Trebuchet24", w * 0.5, h * 0.5, color_white, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+
+                end
+                function PlayerCard.OnMousePressed(_, _)
+                    if canSpecPlayer == false then return end
+                    SelectedPlayer = ply
+                    FSpectate.spectateEntity(SelectedPlayer)
+                    DropDownPlayerOptions:Remove()
+                end
+            end
+        end
+    end
+
+    local ArrowGap = frame:GetWide() * 0.005
+    local ArrowSizeX, ArrowSizeY = MiddleDropDown:GetTall() * 0.9, MiddleDropDown:GetTall()
+    local LeftArrow = vgui.Create("DPanel", frame)
+    LeftArrow:SetSize(ArrowSizeX, ArrowSizeY)
+    LeftArrow:SetPos(MiddleDropDown:GetX() - ArrowSizeX - ArrowGap, (frame:GetTall() - ArrowSizeY) * 0.5)
+    local TriangleLength = ScrW() * 0.004
+    local TriangleHeight = ScrH() * 0.02
+    local LeftTriangle = {
+        {x = (ArrowSizeX - TriangleLength) * 0.5, y = ArrowSizeY * 0.5 },
+        {x = (ArrowSizeX + TriangleLength) * 0.5, y = (ArrowSizeY - TriangleHeight) * 0.5 },
+        {x = (ArrowSizeX + TriangleLength) * 0.5, y = (ArrowSizeY + TriangleHeight) * 0.5 }
+    }
+
+    function LeftArrow.Paint(self, w, h)
+        surface.SetDrawColor(color_black)
+        surface.DrawRect(0, 0, w, h)
+        surface.SetDrawColor(color_white)
+        surface.DrawOutlinedRect(0, 0, w, h, OutlineThickness)
+        draw.NoTexture()
+        surface.DrawPoly(LeftTriangle)
+    end
+
+    function LeftArrow.OnMousePressed(self)
+        spectateNextPlayer(-1)
+    end
+    local RightArrow = vgui.Create("DPanel", frame)
+    RightArrow:SetSize(ArrowSizeX, ArrowSizeY)
+    RightArrow:SetPos(MiddleDropDown:GetX() + MiddleDropDown:GetWide() + ArrowGap, (frame:GetTall() - ArrowSizeY) * 0.5)
+    local RightTriangle = {
+        {x = (ArrowSizeX + TriangleLength) * 0.5, y = ArrowSizeY * 0.5 },
+        {x = (ArrowSizeX - TriangleLength) * 0.5, y = (ArrowSizeY + TriangleHeight) * 0.5 },
+        {x = (ArrowSizeX - TriangleLength) * 0.5, y = (ArrowSizeY - TriangleHeight) * 0.5 }
+    }
+
+    function RightArrow.Paint(self, w, h)
+        surface.SetDrawColor(color_black)
+        surface.DrawRect(0, 0, w, h)
+        surface.SetDrawColor(color_white)
+        surface.DrawOutlinedRect(0, 0, w, h, OutlineThickness)
+        draw.NoTexture()
+        surface.DrawPoly(RightTriangle)
+    end
+
+    function RightArrow.OnMousePressed(self)
+        spectateNextPlayer(1)
+    end
+
+
+
+    local OptionsButton = vgui.Create("DPanel", frame)
+    OptionsButton:SetSize(frame:GetWide() * 0.13, frame:GetTall() * 0.5)
+    OptionsButton:SetPos(frame:GetWide() * 0.01, (frame:GetTall() - OptionsButton:GetTall()) * 0.5)
+
+    local DownwardsTriangle2 = {
+        {x = OptionsButton:GetWide() * 0.93, y = (OptionsButton:GetTall() + TriangHeight) * 0.5},
+        {x = (OptionsButton:GetWide() - TriangLength) * 0.93, y = (OptionsButton:GetTall() - TriangHeight) * 0.5},
+        {x = (OptionsButton:GetWide() + TriangLength) * 0.93, y = (OptionsButton:GetTall() - TriangHeight) * 0.5}
+    }
+
+    function OptionsButton.Paint(self, w, h)
+        surface.SetDrawColor(color_black)
+        surface.DrawRect(0, 0, w, h)
+        surface.SetDrawColor(color_white)
+        surface.DrawOutlinedRect(0, 0, w, h, OutlineThickness)
+        draw.NoTexture()
+        surface.DrawPoly(DownwardsTriangle2)
+        draw.SimpleText("Options", "Trebuchet24", w * 0.075, h * 0.5, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+    end
+
+    function OptionsButton.OnMousePressed(self, button)
+        if IsValid(DropDownOptions) then DropDownOptions:Remove() return end
+        DropDownOptions = vgui.Create("DPanel", ScreenPanel)
+        DropDownOptions:SetSize(OptionsButton:GetWide(), 0)
+        DropDownOptions:SetPos(OptionsButton:LocalToScreen(0, 0))
+        function DropDownOptions.Paint(_, w, h)
+        end
+
+        local Settings = {
+            {"Enable Keyboard", "fspectate_showinputs"},
+            {"Show Hitboxes", "fspectate_showhitboxes"},
+        }
+
+        if hook.GetTable()["FSpectate_autoDirector"] then
+            Settings[#Settings + 1] = {"Auto Director", "fspectate_autodirector"}
+        end
+
+        for i, tbl in ipairs(Settings) do
+            local setting = tbl[1]
+            local convar = tbl[2]
+            local OptionCardHeight = OptionsButton:GetTall() * 0.5
+            local OptionCard = vgui.Create("DPanel", DropDownOptions)
+            OptionCard:SetSize(DropDownOptions:GetWide(), OptionCardHeight)
+            OptionCard:SetPos(0, (i - 1) * OptionCardHeight)
+            --
+            DropDownOptions:SetTall(DropDownOptions:GetTall() + OptionCardHeight)
+            DropDownOptions:SetY(DropDownOptions:GetY() - OptionCardHeight)
+            function OptionCard.Paint(_, w, h)
+                surface.SetDrawColor(color_black)
+                surface.DrawRect(0, 0, w, h)
+                --surface.SetDrawColor(Color(255, 0, 255))
+                --surface.DrawRect(0 - 20, 0, 0 + w, 0 + h - 2, true)
+                -- outline
+                surface.SetDrawColor(color_white)
+                surface.DrawRect(0, 0, OutlineThickness, h)
+                surface.DrawRect(w - OutlineThickness, 0, OutlineThickness, h) -- right
+                if i == table.Count(Settings) then
+                    surface.DrawRect(0, 0, w, OutlineThickness * 0.5) -- top
+                else
+                    surface.DrawRect(0, 0, w, OutlineThickness) -- top
+                end
+                surface.DrawRect(0, h - OutlineThickness * 0.5, w, OutlineThickness * 0.5) -- bottom
+                --
+                -- checkbox
+                local shouldCheckBox = GetConVar(convar):GetBool() == true
+                if shouldCheckBox == true then
+                    draw.NoTexture()
+                    surface.DrawTexturedRectRotated(w * 0.09, h * 0.56, w * 0.04, h * 0.2, -45)
+                    surface.DrawTexturedRectRotated(w * 0.12, h * 0.41, w * 0.07, h * 0.2, 45)
+                end
+                --
+                draw.SimpleText(setting, "Trebuchet24", w * 0.15, h * 0.5, color_white, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+            end
+
+            function OptionCard.OnMousePressed(_, _)
+                RunConsoleCommand(convar, (GetConVar(convar):GetBool() == true and 0) or 1)
+            end
+        end
+    end
+
+end
+
+local function hideSpecMenu()
+    if IsValid(ScreenPanel) then ScreenPanel:Remove() return end
+end
+
+/*---------------------------------------------------------------------------
 specBinds
 Change binds to perform spectate specific tasks
 ---------------------------------------------------------------------------*/
