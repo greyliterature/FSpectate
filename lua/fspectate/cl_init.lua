@@ -199,6 +199,7 @@ Spectate the person you're looking at while you're roaming
 ---------------------------------------------------------------------------*/
 local function spectateLookingAt()
     local obj = findNearestObject()
+    if not obj then stopSpectating() end
     FSpectate.spectateEntity(obj)
 end
 
