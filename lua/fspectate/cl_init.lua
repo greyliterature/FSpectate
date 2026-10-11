@@ -1295,7 +1295,12 @@ startFreeRoam = function()
         if specEnt:IsPlayer() then
             roamPos = thirdperson and getThirdPersonPos(specEnt) or specEnt:GetShootPos()
         end
+
         specEnt:SetNoDraw(false)
+    end
+
+    if IsValid(lastSpecEnt) then
+        lastSpecEnt:SetNoDraw(false)
     end
 
     lastSpecEnt = specEnt
@@ -1369,6 +1374,7 @@ Spectate a player
 local function startSpectate(um)
     canExitSpectate = net.ReadBool()
     isRoaming = net.ReadBool()
+    lastSpecEnt = specEnt
     specEnt = net.ReadEntity()
     specEnt = IsValid(specEnt) and specEnt or nil
     if isRoaming then startFreeRoam() end
@@ -1425,7 +1431,10 @@ stopSpectating = function(forced)
 
     if IsValid(specEnt) then
         specEnt:SetNoDraw(false)
+        local weapon = specEnt:GetActiveWeapon()
+        if IsValid(weapon) then weapon:SetNoDraw(false) end
     end
+
     RunConsoleCommand("FSpectate_StopSpectating")
     thirdperson = false
     isSpectating = false
