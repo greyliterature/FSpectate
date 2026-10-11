@@ -1329,7 +1329,6 @@ local function showViewmodel()
     local path = wep:GetWeaponViewModel()
     if path ~= "" and vm:GetModel() ~= path then vm:SetModel(path) end
 
-    -- weapon changed -> draw animation
     if wep ~= lastWep then
         lastWep = wep
         PlayVMAct(vm, ACT_VM_DRAW)
@@ -1351,9 +1350,6 @@ end
 local function animateViewmodel(ply, event, data)
     if ply ~= specEnt then return end
     local m = specEnt:GetViewModel()
-
-    if CurTime() < lastAnim then return end -- avoid double-triggering with the clip check
-    lastAnim = CurTime() + 0.05
 
     if event == PLAYERANIMEVENT_ATTACK_PRIMARY then
         PlayVMAct(m, ACT_VM_PRIMARYATTACK)
