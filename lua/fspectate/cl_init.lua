@@ -2,7 +2,7 @@ FSpectate = {}
 
 local stopSpectating, startFreeRoam
 local isSpectating = false
-local specEnt
+local specEnt, lastSpecEnt
 local thirdperson = false
 local isRoaming = false
 local roamPos -- the position when roaming free
@@ -271,7 +271,9 @@ local function specBinds(ply, bind, pressed)
                 startFreeRoam()
             end
             thirdperson = not thirdperson
-        elseif isRoaming then
+        elseif isRoaming and lastSpecEnt then
+            FSpectate.spectateEntity(lastSpecEnt)
+        else
             stopSpectating()
         end
         return true
@@ -1283,6 +1285,7 @@ startFreeRoam = function()
         end
         return
     end
+
     roamPos = isSpectating and roamPos or LocalPlayer():GetShootPos()
 
     if IsValid(specEnt) then
@@ -1292,6 +1295,7 @@ startFreeRoam = function()
         specEnt:SetNoDraw(false)
     end
 
+    lastSpecEnt = specEnt
     specEnt = nil
     isRoaming = true
     keysDown = {}
