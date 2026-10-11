@@ -1301,6 +1301,10 @@ startFreeRoam = function()
 
     if IsValid(lastSpecEnt) then
         lastSpecEnt:SetNoDraw(false)
+        local weapon = lastSpecEnt:GetActiveWeapon()
+        if IsValid(weapon) then
+            weapon:SetNoDraw(false)
+        end
     end
 
     lastSpecEnt = specEnt
