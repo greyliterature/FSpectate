@@ -1303,59 +1303,60 @@ startFreeRoam = function()
 end
 
 /*---------------------------------------------------------------------------
-animateViewmodel
+playViewmodelAct, showViewmodel, animateViewmodel
 Copy worldmodel animations 
 ---------------------------------------------------------------------------*/
 local lastWep
 
-local function playVMAct(vm, act)
-    local seq = vm:SelectWeightedSequence(act)
+local function playViewmodelAct(viewmodel, act)
+    local seq = viewmodel:SelectWeightedSequence(act)
     if seq and seq >= 0 then
-        vm:ResetSequence(seq)
-        vm:SetCycle(0)
-        vm:SetPlaybackRate(1)
+        viewmodel:ResetSequence(seq)
+        viewmodel:SetCycle(0)
+        viewmodel:SetPlaybackRate(1)
     end
 end
 
 local function showViewmodel()
     if not IsValid(specEnt) then return end
     if thirdperson then return end
-    local vm = specEnt:GetViewModel(0)
-    local wep = specEnt:GetActiveWeapon()
-    if not IsValid(vm) or not IsValid(wep) then return end
+    local viewmodel = specEnt:GetViewModel(0)
+    local weapon = specEnt:GetActiveWeapon()
+    if not IsValid(viewmodel) or not IsValid(weapon) then return end
 
     -- model only on change
-    local path = wep:GetWeaponViewModel()
-    if path ~= "" and vm:GetModel() ~= path then vm:SetModel(path) end
+    local path = weapon:GetWeaponViewModel()
+    if path ~= "" and viewmodel:GetModel() ~= path then viewmodel:SetModel(path) end
 
-    if wep ~= lastWep then
-        lastWep = wep
-        PlayVMAct(vm, ACT_VM_DRAW)
+    if weapon ~= lastWep then
+        lastWep = weapon
+        playViewmodelAct(viewmodel, ACT_VM_DRAW)
     end
 
     -- one-shot finished -> idle
-    if vm:GetCycle() >= 0.99 and vm:GetSequenceActivity(vm:GetSequence()) ~= ACT_VM_IDLE then
-        PlayVMAct(vm, ACT_VM_IDLE)
+    if viewmodel:GetCycle() >= 0.99 and viewmodel:GetSequenceActivity(viewmodel:GetSequence()) ~= ACT_VM_IDLE then
+        playViewmodelAct(viewmodel, ACT_VM_IDLE)
     end
-    vm:FrameAdvance()
 
-    vm:SetPos(specEnt:GetShootPos())
-    vm:SetRenderOrigin(specEnt:GetShootPos())
-    vm:SetRenderAngles(specEnt:EyeAngles())
-    vm:SetupBones()
-    vm:DrawModel()
+    viewmodel:FrameAdvance()
+
+    viewmodel:SetPos(specEnt:GetShootPos())
+    viewmodel:SetRenderOrigin(specEnt:GetShootPos())
+    viewmodel:SetRenderAngles(specEnt:EyeAngles())
+    viewmodel:SetupBones()
+    viewmodel:DrawModel()
 end
 
 local function animateViewmodel(ply, event, data)
     if ply ~= specEnt then return end
-    local m = specEnt:GetViewModel()
+    local viewmodel = specEnt:GetViewModel()
 
     if event == PLAYERANIMEVENT_ATTACK_PRIMARY then
-        PlayVMAct(m, ACT_VM_PRIMARYATTACK)
+        playViewmodelAct(viewmodel, ACT_VM_PRIMARYATTACK)
     elseif event == PLAYERANIMEVENT_ATTACK_SECONDARY then
-        PlayVMAct(m, ACT_VM_SECONDARYATTACK)
+        playViewmodelAct(viewmodel, ACT_VM_SECONDARYATTACK)
     elseif event == PLAYERANIMEVENT_RELOAD then
-        PlayVMAct(m, ACT_VM_RELOAD)
+        playViewmodelAct(viewmodel, ACT_VM_RELOAD)
     end
 end
 
