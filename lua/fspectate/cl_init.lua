@@ -1307,9 +1307,8 @@ animateViewmodel
 Copy worldmodel animations 
 ---------------------------------------------------------------------------*/
 local lastWep
-local lastAnim = 0
 
-local function PlayVMAct(vm, act)
+local function playVMAct(vm, act)
     local seq = vm:SelectWeightedSequence(act)
     if seq and seq >= 0 then
         vm:ResetSequence(seq)
