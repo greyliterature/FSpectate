@@ -1349,7 +1349,7 @@ local function showViewmodel()
 end
 
 local function animateViewmodel(ply, event, data)
-    if ply ~= specEnt then return end--or not IsValid(specEnt.ViewModel) then return end
+    if ply ~= specEnt then return end
     local m = specEnt:GetViewModel()
 
     if CurTime() < lastAnim then return end -- avoid double-triggering with the clip check
