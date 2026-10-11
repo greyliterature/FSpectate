@@ -125,6 +125,8 @@ local function specCalcView(ply, origin, angles, fov)
 
     if IsValid(specEnt) then
         specEnt:SetNoDraw(not thirdperson)
+        local weapon = specEnt:GetActiveWeapon()
+        if IsValid(weapon) then weapon:SetNoDraw(not thirdperson) end
     end
 
     return view
