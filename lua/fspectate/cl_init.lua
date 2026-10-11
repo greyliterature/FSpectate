@@ -1303,6 +1303,70 @@ startFreeRoam = function()
 end
 
 /*---------------------------------------------------------------------------
+animateViewmodel
+Copy worldmodel animations 
+---------------------------------------------------------------------------*/
+local lastWep
+local lastAnim = 0
+
+local function PlayVMAct(vm, act)
+    local seq = vm:SelectWeightedSequence(act)
+    if seq and seq >= 0 then
+        vm:ResetSequence(seq)
+        vm:SetCycle(0)
+        vm:SetPlaybackRate(1)
+    end
+end
+
+local function showViewmodel()
+    if not IsValid(specEnt) then return end
+    if thirdperson then return end
+    local vm = specEnt:GetViewModel(0)
+    local wep = specEnt:GetActiveWeapon()
+    if not IsValid(vm) or not IsValid(wep) then return end
+
+    -- model only on change
+    local path = wep:GetWeaponViewModel()
+    if path ~= "" and vm:GetModel() ~= path then vm:SetModel(path) end
+
+    -- weapon changed -> draw animation
+    if wep ~= lastWep then
+        lastWep = wep
+        PlayVMAct(vm, ACT_VM_DRAW)
+    end
+
+    -- one-shot finished -> idle
+    if vm:GetCycle() >= 0.99 and vm:GetSequenceActivity(vm:GetSequence()) ~= ACT_VM_IDLE then
+        PlayVMAct(vm, ACT_VM_IDLE)
+    end
+    vm:FrameAdvance()
+
+    vm:SetPos(specEnt:GetShootPos())
+    vm:SetRenderOrigin(specEnt:GetShootPos())
+    vm:SetRenderAngles(specEnt:EyeAngles())
+    vm:SetupBones()
+    vm:DrawModel()
+end
+
+local function animateViewmodel(ply, event, data)
+    if ply ~= specEnt then return end--or not IsValid(specEnt.ViewModel) then return end
+    local m = specEnt:GetViewModel()
+
+    if CurTime() < lastAnim then return end -- avoid double-triggering with the clip check
+    lastAnim = CurTime() + 0.05
+
+    if event == PLAYERANIMEVENT_ATTACK_PRIMARY then
+        PlayVMAct(m, ACT_VM_PRIMARYATTACK)
+        local wep = specEnt:GetActiveWeapon()
+        --if IsValid(wep) and ShouldFlash(wep) then TriggerFlash() end
+    elseif event == PLAYERANIMEVENT_ATTACK_SECONDARY then
+        PlayVMAct(m, ACT_VM_SECONDARYATTACK)
+    elseif event == PLAYERANIMEVENT_RELOAD then
+        PlayVMAct(m, ACT_VM_RELOAD)
+    end
+end
+
+/*---------------------------------------------------------------------------
 startSpectate
 Spectate a player
 ---------------------------------------------------------------------------*/
@@ -1312,6 +1376,7 @@ local function startSpectate(um)
     specEnt = net.ReadEntity()
     specEnt = IsValid(specEnt) and specEnt or nil
     if isRoaming then startFreeRoam() end
+
     isSpectating = true
     keysDown = {}
     hook.Add("CalcView", "FSpectate", specCalcView)
@@ -1324,6 +1389,12 @@ local function startSpectate(um)
     hook.Add("RenderScreenspaceEffects", "FSpectate", lookingLines)
     hook.Add("HUDShouldDraw", "FSpectate", hideHUD)
     hook.Add("PostPlayerDraw", "FSpectate", drawHitboxes)
+    hook.Add("PostDrawOpaqueRenderables", "FSpectate", showViewmodel)
+    hook.Add("DoAnimationEvent", "FSpectate", animateViewmodel)
+    hook.Add("PreDrawPlayerHands", "FSpectate", function()
+        if IsValid(specEnt) then return true end
+    end)
+
     timer.Create("FSpectatePosUpdate", 0.5, 0, function()
         if not isRoaming then return end
         RunConsoleCommand("_FSpectatePosUpdate", roamPos.x, roamPos.y, roamPos.z)
@@ -1331,7 +1402,6 @@ local function startSpectate(um)
 end
 
 net.Receive("FSpectate", startSpectate)
-
 /*---------------------------------------------------------------------------
 stopSpectating
 Stop spectating a player
@@ -1352,7 +1422,11 @@ stopSpectating = function(forced)
     hook.Remove("RenderScreenspaceEffects", "FSpectate")
     hook.Remove("HUDShouldDraw", "FSpectate")
     hook.Remove("PostPlayerDraw", "FSpectate")
+    hook.Remove("DoAnimationEvent", "FSpectate")
+    hook.Remove("PostDrawOpaqueRenderables", "FSpectate")
+    hook.Remove("PreDrawPlayerHands", "FSpectate")
     timer.Remove("FSpectatePosUpdate")
+
     if IsValid(specEnt) then
         specEnt:SetNoDraw(false)
     end
