@@ -1358,7 +1358,6 @@ local function animateViewmodel(ply, event, data)
     if event == PLAYERANIMEVENT_ATTACK_PRIMARY then
         PlayVMAct(m, ACT_VM_PRIMARYATTACK)
         local wep = specEnt:GetActiveWeapon()
-        --if IsValid(wep) and ShouldFlash(wep) then TriggerFlash() end
     elseif event == PLAYERANIMEVENT_ATTACK_SECONDARY then
         PlayVMAct(m, ACT_VM_SECONDARYATTACK)
     elseif event == PLAYERANIMEVENT_RELOAD then
